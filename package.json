@@ -1,7 +1,7 @@
 {
   "name": "mikrocanvas",
   "version": "1.0.0",
-  "description": "MikroCanvas is the minimalist visual canvas that's all yours.",
+  "description": "Local-first visual canvas for fast ad hoc thinking.",
   "type": "module",
   "license": "MIT",
   "author": "Mikael Vesavuori",

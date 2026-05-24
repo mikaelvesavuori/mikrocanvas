@@ -1,6 +1,6 @@
 # MikroCanvas
 
-**The minimalist visual canvas that's all yours.**
+**Local-first visual canvas for fast ad hoc thinking.**
 
 ![MikroCanvas product view](./mikrocanvas.png)
 

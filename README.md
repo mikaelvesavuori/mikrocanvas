@@ -4,7 +4,7 @@
 
 ![MikroCanvas product view](./mikrocanvas.png)
 
-Use MikroCanvas online for free at [canvas.mikrosuite.com](https://canvas.mikrosuite.com). It runs directly in the browser over HTTPS, needs no account, and stores boards privately in browser storage for that site unless you export them.
+_Use MikroCanvas online for free at [canvas.mikrosuite.com](https://canvas.mikrosuite.com). It runs directly in the browser over HTTPS, needs no account, and stores boards privately in browser storage for that site unless you export them._
 
 MikroCanvas is a lightweight local-first visual canvas for fast ad hoc thinking. It keeps boards in browser storage, exports portable JSON/SVG/PNG files, and runs as a static web app.
 

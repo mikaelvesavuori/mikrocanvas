@@ -1,0 +1,21 @@
+---
+title: Deployment
+description: Host MikroCanvas as a static app.
+---
+
+MikroCanvas ships as static files and can be served from any host that can deliver HTML, CSS, JavaScript, SVG, and web manifest files.
+
+```bash
+curl -sSL -o mikrocanvas.zip https://releases.mikrosuite.com/mikrocanvas_latest.zip
+unzip mikrocanvas.zip -d mikrocanvas
+```
+
+Deploy the extracted app files.
+
+## Hosting notes
+
+- Serve `index.html` as the entry point.
+- Keep `assets/main.js`, `assets/styles.css`, `app-icon.svg`, `app-icon-192.png`, `app-icon-512.png`, favicon files, and `manifest.webmanifest` beside it.
+- Use HTTPS for hosted deployments so browser storage and file features behave consistently.
+
+No server API is required for the local-first app.

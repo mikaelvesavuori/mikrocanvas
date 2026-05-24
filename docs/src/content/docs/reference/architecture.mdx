@@ -1,0 +1,17 @@
+---
+title: Architecture
+description: Runtime overview for MikroCanvas.
+---
+
+MikroCanvas is a static browser app with local board storage, import/export tools, and a presentation layer for drawing and editing.
+
+## Runtime Boundaries
+
+- The app shell runs entirely in the browser.
+- IndexedDB stores boards for the current origin.
+- Import and export are explicit user actions.
+- No backend API is required for normal drawing.
+
+## Hosting
+
+Serve the extracted release archive from a stable origin. Browser storage is scoped to that origin, so moving the app to another domain gives the browser a separate board library.

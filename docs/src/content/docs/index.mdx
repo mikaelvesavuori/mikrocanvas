@@ -1,0 +1,47 @@
+---
+title: MikroCanvas
+description: Local-first visual thinking in the browser.
+template: splash
+hero:
+  tagline: Local-first canvas for fast thinking. Diagrams, notes, sketches, and portable boards.
+  image:
+    light: ../../assets/logo.svg
+    dark: ../../assets/logo.svg
+  actions:
+    - text: Get Started
+      link: /canvas/docs/getting-started/intro
+      icon: rocket
+    - text: Installation
+      link: /canvas/docs/getting-started/installation
+      icon: laptop
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+<CardGrid>
+  <Card title="Getting Started" icon="open-book">
+    Set up MikroCanvas and start drawing.
+
+    <LinkCard title="What is MikroCanvas?" href="/canvas/docs/getting-started/intro" />
+    <LinkCard title="Installation" href="/canvas/docs/getting-started/installation" />
+  </Card>
+
+  <Card title="Guides" icon="puzzle">
+    Deep dives into MikroCanvas features.
+
+    <LinkCard title="Configuration" href="/canvas/docs/guides/configuration" />
+    <LinkCard title="Authentication" href="/canvas/docs/guides/authentication" />
+    <LinkCard title="Working on the Canvas" href="/canvas/docs/guides/canvas-basics" />
+    <LinkCard title="Import and Export" href="/canvas/docs/guides/import-export" />
+    <LinkCard title="Local Data and Backups" href="/canvas/docs/guides/local-data" />
+    <LinkCard title="Deployment" href="/canvas/docs/guides/deployment" />
+  </Card>
+
+  <Card title="References" icon="document">
+    Complete API and configuration documentation.
+
+    <LinkCard title="Privacy and Security" href="/canvas/docs/reference/privacy-security" />
+    <LinkCard title="Architecture" href="/canvas/docs/reference/architecture" />
+    <LinkCard title="Comparison" href="/canvas/docs/reference/comparison" />
+  </Card>
+</CardGrid>

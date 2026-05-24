@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MikroCanvas</title>
+    <meta name="description" content="A local-first visual canvas for fast ad hoc thinking." />
+    <link rel="stylesheet" href="./assets/styles.css" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./favicon.ico" sizes="any" />
+    <link rel="icon" href="./favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <meta name="theme-color" content="#f4f6f9" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0d10" media="(prefers-color-scheme: dark)" />
+  </head>
+  <body>
+    <svg class="icon-sprite" aria-hidden="true" focusable="false">
+      <symbol id="icon-select" viewBox="0 0 24 24">
+        <path d="m5 3 10 16 1.5-6.5L22 10 5 3Z" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-hand" viewBox="0 0 24 24">
+        <path d="M7 11V6.5a1.5 1.5 0 0 1 3 0V11m0-.5V5a1.5 1.5 0 0 1 3 0v5.5M13 10V6a1.5 1.5 0 0 1 3 0v6m0-1.5V8a1.5 1.5 0 0 1 3 0v5.8c0 4.4-2.9 7.2-7.1 7.2H11c-2.1 0-3.8-.8-5-2.4L3.4 15a1.7 1.7 0 0 1 2.5-2.3L8 14.5" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-sticky" viewBox="0 0 24 24">
+        <path d="M5 4.5h14v10L14 19.5H5v-15Z" stroke-linejoin="round" />
+        <path d="M14 19.5V14h5" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-text" viewBox="0 0 24 24">
+        <path d="M5 6V4h14v2M12 4v16m-4 0h8" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-rectangle" viewBox="0 0 24 24">
+        <path d="M5 6h14v12H5z" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-ellipse" viewBox="0 0 24 24">
+        <path d="M4.5 12a7.5 5.5 0 1 0 15 0 7.5 5.5 0 1 0-15 0" />
+      </symbol>
+      <symbol id="icon-diamond" viewBox="0 0 24 24">
+        <path d="m12 3.5 8.5 8.5-8.5 8.5L3.5 12 12 3.5Z" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-triangle" viewBox="0 0 24 24">
+        <path d="M12 4 21 20H3L12 4Z" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-capsule" viewBox="0 0 24 24">
+        <rect x="4" y="6" width="16" height="12" rx="6" />
+      </symbol>
+      <symbol id="icon-document-shape" viewBox="0 0 24 24">
+        <path d="M5 4.5h14v12.2c-3.2 2.2-5.8 2.2-8.8.5-1.8-1-3.4-1-5.2.2V4.5Z" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-database-shape" viewBox="0 0 24 24">
+        <path d="M5 7.5c0-2 3.1-3.5 7-3.5s7 1.5 7 3.5v9c0 2-3.1 3.5-7 3.5s-7-1.5-7-3.5v-9Z" stroke-linejoin="round" />
+        <path d="M5 7.5c0 2 3.1 3.5 7 3.5s7-1.5 7-3.5M5 12c0 2 3.1 3.5 7 3.5s7-1.5 7-3.5" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-parallelogram" viewBox="0 0 24 24">
+        <path d="M8 5h13l-5 14H3L8 5Z" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-trapezoid" viewBox="0 0 24 24">
+        <path d="M7 5h10l4 14H3L7 5Z" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-hexagon" viewBox="0 0 24 24">
+        <path d="M8 4h8l5 8-5 8H8l-5-8 5-8Z" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-octagon" viewBox="0 0 24 24">
+        <path d="M8 4h8l4 4v8l-4 4H8l-4-4V8l4-4Z" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-chevron-shape" viewBox="0 0 24 24">
+        <path d="M4 5h10l6 7-6 7H4l6-7-6-7Z" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-arrow" viewBox="0 0 24 24">
+        <path d="M4 12h15m0 0-5-5m5 5-5 5" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-arrow-style" viewBox="0 0 24 24">
+        <path d="M5 12h14m0 0-4-4m4 4-4 4" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M5 12h.01" stroke-linecap="round" />
+      </symbol>
+      <symbol id="icon-arrowhead-none" viewBox="0 0 24 24">
+        <path d="M6 12h12M6 9v6m12-6v6" stroke-linecap="round" />
+      </symbol>
+      <symbol id="icon-arrowhead-start" viewBox="0 0 24 24">
+        <path d="M5 12h14M9 8l-4 4 4 4" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-arrowhead-end" viewBox="0 0 24 24">
+        <path d="M5 12h14m-4-4 4 4-4 4" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-arrowhead-both" viewBox="0 0 24 24">
+        <path d="M5 12h14M9 8l-4 4 4 4m6-8 4 4-4 4" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-elbow-arrow" viewBox="0 0 24 24">
+        <path d="M5 6v8h13m0 0-4-4m4 4-4 4" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-pen" viewBox="0 0 24 24">
+        <path d="M4 17.5c2.2-4.2 4.8-4.2 6.8 0 1.5 3.2 4.1 3.2 6.2-.1.9-1.5 1.8-2.2 3-2.2" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="m15.5 4.5 4 4-6.9 6.9-4.5 1 1-4.5 6.4-7.4Z" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-comment" viewBox="0 0 24 24">
+        <path d="M20 14.5a3 3 0 0 1-3 3H9.5L4 20.5V6.5a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v8Z" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-undo" viewBox="0 0 24 24">
+        <path d="M9 15 4 10m0 0 5-5m-5 5h10a5 5 0 1 1 0 10h-3" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-redo" viewBox="0 0 24 24">
+        <path d="m15 15 5-5m0 0-5-5m5 5H10a5 5 0 1 0 0 10h3" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-plus" viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+      </symbol>
+      <symbol id="icon-minus" viewBox="0 0 24 24">
+        <path d="M5 12h14" stroke-linecap="round" />
+      </symbol>
+      <symbol id="icon-folder" viewBox="0 0 24 24">
+        <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h3.2l2 2H18a2 2 0 0 1 2 2v8.5A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-10Z" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-copy" viewBox="0 0 24 24">
+        <path d="M8 8h11v11H8zM5 16H4V4h12v1" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-trash" viewBox="0 0 24 24">
+        <path d="M5 7h14M10 11v6m4-6v6M9 7V5h6v2m-8 0 1 13h8l1-13" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-upload" viewBox="0 0 24 24">
+        <path d="M4 16.5v2A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5v-2M12 15V3m-4 4 4-4 4 4" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-download" viewBox="0 0 24 24">
+        <path d="M4 16.5v2A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5v-2M12 3v12m-4-4 4 4 4-4" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-image" viewBox="0 0 24 24">
+        <path d="M5 6.5A1.5 1.5 0 0 1 6.5 5h11A1.5 1.5 0 0 1 19 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 17.5v-11Zm2.5 9 3-3 2 2 2.5-3 3.5 4M8.5 8.5h.01" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-grid" viewBox="0 0 24 24">
+        <path d="M5 5h.01M12 5h.01M19 5h.01M5 12h.01M12 12h.01M19 12h.01M5 19h.01M12 19h.01M19 19h.01" stroke-linecap="round" />
+      </symbol>
+      <symbol id="icon-moon" viewBox="0 0 24 24">
+        <path fill="currentColor" stroke="none" d="M12 20.5a8.5 8.5 0 0 0 8.5-8.5c0-.7-.1-1.05-.43-1.05-.2 0-.36.12-.56.22a5.8 5.8 0 0 1-2.58.58 4.68 4.68 0 0 1-4.68-4.68c0-.94.2-1.8.58-2.58.1-.2.22-.36.22-.56 0-.33-.35-.43-1.05-.43a8.5 8.5 0 1 0 0 17Z" />
+      </symbol>
+      <symbol id="icon-sun" viewBox="0 0 24 24">
+        <path d="M12 3v1.5m0 15V21m8.485-8.485H21m-18 0H3m15.364-6.364 1.06-1.06M4.576 19.425l1.06-1.06m12.728 0 1.06 1.06M4.576 4.575l1.06 1.06M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-x" viewBox="0 0 24 24">
+        <path d="m6 18 12-12M6 6l12 12" stroke-linecap="round" />
+      </symbol>
+      <symbol id="icon-chevron-down" viewBox="0 0 24 24">
+        <path d="m7 10 5 5 5-5" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-arrange" viewBox="0 0 24 24">
+        <path d="M7 6h10M7 18h10M9 10l3-3 3 3M15 14l-3 3-3-3" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-front" viewBox="0 0 24 24">
+        <path d="M8 8h11v11H8zM5 5h11v3M5 5v11h3" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-back" viewBox="0 0 24 24">
+        <path d="M5 5h11v11H5zM8 16v3h11V8h-3" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-lock" viewBox="0 0 24 24">
+        <path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12v10H6V10Z" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="icon-unlock" viewBox="0 0 24 24">
+        <path d="M8 10V8a5 5 0 0 1 9-3M6 10h12v10H6V10Z" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+    </svg>
+
+    <div class="app-shell">
+      <header class="top-bar" aria-label="Board controls">
+        <div class="brand-cluster">
+          <span class="brand-name">MikroCanvas</span>
+          <input id="board-title-input" class="board-title-input" aria-label="Board title" />
+        </div>
+        <div class="action-cluster">
+          <button id="new-board-btn" class="button icon-button" type="button" title="New board" aria-label="New board">
+            <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
+          </button>
+          <button id="library-btn" class="button icon-button" type="button" title="Boards" aria-label="Boards">
+            <svg class="icon" aria-hidden="true"><use href="#icon-folder"></use></svg>
+          </button>
+          <button id="import-btn" class="button icon-button" type="button" title="Import board" aria-label="Import board">
+            <svg class="icon" aria-hidden="true"><use href="#icon-upload"></use></svg>
+          </button>
+          <button id="export-json-btn" class="button icon-button" type="button" title="Export JSON" aria-label="Export JSON">
+            <svg class="icon" aria-hidden="true"><use href="#icon-download"></use></svg>
+          </button>
+          <button id="export-image-btn" class="button icon-button" type="button" title="Export image" aria-label="Export image" aria-haspopup="menu" aria-expanded="false">
+            <svg class="icon" aria-hidden="true"><use href="#icon-image"></use></svg>
+          </button>
+          <button id="theme-btn" class="button icon-button" type="button" title="Toggle theme" aria-label="Toggle theme">
+            <svg class="icon" aria-hidden="true"><use id="theme-icon" href="#icon-moon"></use></svg>
+          </button>
+          <input id="import-file-input" class="visually-hidden" type="file" accept=".json,application/json" />
+        </div>
+      </header>
+
+      <main id="canvas-stage" class="canvas-stage" aria-label="Diagram canvas">
+        <svg id="canvas-svg" class="canvas-svg" aria-label="Diagram drawing surface">
+          <title>Diagram drawing surface</title>
+          <defs>
+            <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0f172a" flood-opacity="0.12" />
+            </filter>
+          </defs>
+          <g id="world-layer"></g>
+          <g id="overlay-layer"></g>
+        </svg>
+        <textarea id="inline-editor" class="inline-editor" aria-label="Edit diagram text"></textarea>
+      </main>
+
+      <nav class="tool-dock" aria-label="Drawing tools">
+        <button class="tool-button" data-tool="select" type="button" title="Select (V)" aria-label="Select">
+          <svg class="icon" aria-hidden="true"><use href="#icon-select"></use></svg>
+        </button>
+        <button class="tool-button" data-tool="hand" type="button" title="Hand (H)" aria-label="Hand">
+          <svg class="icon" aria-hidden="true"><use href="#icon-hand"></use></svg>
+        </button>
+        <span class="dock-separator"></span>
+        <button class="tool-button" data-tool="sticky" type="button" title="Sticky note (N)" aria-label="Sticky note">
+          <svg class="icon" aria-hidden="true"><use href="#icon-sticky"></use></svg>
+        </button>
+        <button class="tool-button" data-tool="text" type="button" title="Text (T)" aria-label="Text">
+          <svg class="icon" aria-hidden="true"><use href="#icon-text"></use></svg>
+        </button>
+        <details class="shape-selector" data-shape-menu>
+          <summary class="tool-button shape-trigger" data-shape-trigger title="Rectangle (R)" aria-label="Shape selector">
+            <svg class="icon" aria-hidden="true"><use data-current-shape-icon href="#icon-rectangle"></use></svg>
+            <svg class="icon chevron-icon" aria-hidden="true"><use href="#icon-chevron-down"></use></svg>
+          </summary>
+          <div class="shape-menu floating-menu" data-shape-options role="menu" aria-label="Shapes and objects"></div>
+        </details>
+        <button class="tool-button" data-tool="arrow" type="button" title="Arrow (A)" aria-label="Arrow">
+          <svg class="icon" aria-hidden="true"><use href="#icon-arrow"></use></svg>
+        </button>
+        <button class="tool-button" data-tool="draw" type="button" title="Pen (P)" aria-label="Pen">
+          <svg class="icon" aria-hidden="true"><use href="#icon-pen"></use></svg>
+        </button>
+        <button class="tool-button" data-tool="comment" type="button" title="Comment (C)" aria-label="Comment">
+          <svg class="icon" aria-hidden="true"><use href="#icon-comment"></use></svg>
+        </button>
+      </nav>
+
+      <section class="zoom-cluster" aria-label="History and zoom controls">
+        <button id="undo-btn" class="button icon-button" type="button" title="Undo" aria-label="Undo">
+          <svg class="icon" aria-hidden="true"><use href="#icon-undo"></use></svg>
+        </button>
+        <button id="redo-btn" class="button icon-button" type="button" title="Redo" aria-label="Redo">
+          <svg class="icon" aria-hidden="true"><use href="#icon-redo"></use></svg>
+        </button>
+        <span class="zoom-separator" aria-hidden="true"></span>
+        <button id="grid-toggle-btn" class="button icon-button" type="button" title="Hide grid" aria-label="Hide grid" aria-pressed="true">
+          <svg class="icon" aria-hidden="true"><use href="#icon-grid"></use></svg>
+        </button>
+        <span class="zoom-separator" aria-hidden="true"></span>
+        <button id="zoom-out-btn" class="button icon-button" type="button" title="Zoom out" aria-label="Zoom out">
+          <svg class="icon" aria-hidden="true"><use href="#icon-minus"></use></svg>
+        </button>
+        <button id="zoom-fit-btn" class="button zoom-readout" type="button" title="Fit to content">100%</button>
+        <button id="zoom-in-btn" class="button icon-button" type="button" title="Zoom in" aria-label="Zoom in">
+          <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
+        </button>
+      </section>
+
+      <section id="inspector" class="context-toolbar" aria-label="Selection style controls" hidden>
+        <button id="edit-text-btn" class="button icon-button text-edit-button selection-chip" type="button" title="Edit text" aria-label="Edit selected text">
+          <svg class="icon" aria-hidden="true"><use href="#icon-text"></use></svg>
+        </button>
+
+        <span class="context-separator primary-context-separator"></span>
+
+        <details class="inspector-menu-group fill-control" data-inspector-menu>
+          <summary class="inspector-trigger" title="Fill color" aria-label="Fill color">
+            <span class="current-swatch" data-current-fill aria-hidden="true"></span>
+            <svg class="icon chevron-icon" aria-hidden="true"><use href="#icon-chevron-down"></use></svg>
+          </summary>
+          <div class="inspector-menu" role="menu" aria-label="Fill color">
+            <div class="color-group">
+              <button class="swatch no-fill-swatch" data-style-kind="fill" data-color="transparent" style="--swatch: transparent" type="button" title="No fill" aria-label="No fill"></button>
+              <button class="swatch" data-style-kind="fill" data-color="#fde68a" style="--swatch: #fde68a" type="button" title="Yellow fill"></button>
+              <button class="swatch" data-style-kind="fill" data-color="#dbeafe" style="--swatch: #dbeafe" type="button" title="Blue fill"></button>
+              <button class="swatch" data-style-kind="fill" data-color="#d1fae5" style="--swatch: #d1fae5" type="button" title="Mint fill"></button>
+              <button class="swatch" data-style-kind="fill" data-color="#ffe4e6" style="--swatch: #ffe4e6" type="button" title="Rose fill"></button>
+              <label class="custom-color" title="Custom fill color" aria-label="Custom fill color">
+                <input id="fill-color-input" type="color" />
+              </label>
+            </div>
+          </div>
+        </details>
+
+        <details class="inspector-menu-group stroke-control" data-inspector-menu>
+          <summary class="inspector-trigger" title="Stroke color" aria-label="Stroke color">
+            <span class="current-line-swatch" data-current-stroke aria-hidden="true"></span>
+            <svg class="icon chevron-icon" aria-hidden="true"><use href="#icon-chevron-down"></use></svg>
+          </summary>
+          <div class="inspector-menu" role="menu" aria-label="Stroke color">
+            <div class="color-group">
+              <button class="swatch stroke-swatch" data-style-kind="stroke" data-color="#334155" style="--swatch: #334155" type="button" title="Ink stroke"></button>
+              <button class="swatch stroke-swatch" data-style-kind="stroke" data-color="#2563eb" style="--swatch: #2563eb" type="button" title="Blue stroke"></button>
+              <button class="swatch stroke-swatch" data-style-kind="stroke" data-color="#059669" style="--swatch: #059669" type="button" title="Green stroke"></button>
+              <button class="swatch stroke-swatch" data-style-kind="stroke" data-color="#e11d48" style="--swatch: #e11d48" type="button" title="Rose stroke"></button>
+              <label class="custom-color" title="Custom stroke color" aria-label="Custom stroke color">
+                <input id="stroke-color-input" type="color" />
+              </label>
+            </div>
+          </div>
+        </details>
+
+        <details class="inspector-menu-group line-style-control" data-inspector-menu>
+          <summary class="inspector-trigger" title="Line style" aria-label="Line style">
+            <span class="line-style-preview current-line-preview" data-current-line-style aria-hidden="true"></span>
+            <svg class="icon chevron-icon" aria-hidden="true"><use href="#icon-chevron-down"></use></svg>
+          </summary>
+          <div class="inspector-menu" role="menu" aria-label="Line style">
+            <div class="line-style-options">
+              <button class="button line-style-button" data-line-style="solid" type="button" title="Solid line" aria-label="Solid line">
+                <span class="line-style-preview solid-preview" aria-hidden="true"></span>
+              </button>
+              <button class="button line-style-button" data-line-style="dashed" type="button" title="Dashed line" aria-label="Dashed line">
+                <span class="line-style-preview dashed-preview" aria-hidden="true"></span>
+              </button>
+            </div>
+          </div>
+        </details>
+
+        <details class="inspector-menu-group text-style-control" data-inspector-menu>
+          <summary class="inspector-trigger text-trigger" title="Text style" aria-label="Text style">
+            <span class="text-trigger-label" aria-hidden="true">Aa</span>
+            <span class="font-size-readout" data-current-font-size aria-hidden="true">16</span>
+            <svg class="icon chevron-icon" aria-hidden="true"><use href="#icon-chevron-down"></use></svg>
+          </summary>
+          <div class="inspector-menu text-style-menu" role="menu" aria-label="Text style">
+            <div class="text-format-group" aria-label="Text formatting">
+              <button id="bold-text-btn" class="button icon-button text-format-button" type="button" title="Bold" aria-label="Bold" aria-pressed="false">
+                <strong aria-hidden="true">B</strong>
+              </button>
+              <button id="italic-text-btn" class="button icon-button text-format-button" type="button" title="Italic" aria-label="Italic" aria-pressed="false">
+                <em aria-hidden="true">I</em>
+              </button>
+            </div>
+            <div class="font-size-control" aria-label="Font size">
+              <input id="font-size-input" class="font-size-input" type="number" min="10" max="64" step="1" aria-label="Font size" />
+            </div>
+            <div class="color-group" aria-label="Text color">
+              <span class="color-group-icon text-color-icon" aria-hidden="true">A</span>
+              <button class="swatch text-swatch" data-style-kind="text" data-color="#1f2937" style="--swatch: #1f2937" type="button" title="Ink text"></button>
+              <button class="swatch text-swatch" data-style-kind="text" data-color="#1d4ed8" style="--swatch: #1d4ed8" type="button" title="Blue text"></button>
+              <button class="swatch text-swatch" data-style-kind="text" data-color="#047857" style="--swatch: #047857" type="button" title="Green text"></button>
+              <label class="custom-color" title="Custom text color" aria-label="Custom text color">
+                <input id="text-color-input" type="color" />
+              </label>
+            </div>
+          </div>
+        </details>
+
+        <button id="route-arrow-btn" class="button icon-button route-control" type="button" title="Toggle angled arrow" aria-label="Toggle angled arrow">
+          <svg class="icon" aria-hidden="true"><use href="#icon-elbow-arrow"></use></svg>
+        </button>
+
+        <details class="inspector-menu-group arrow-head-control" data-inspector-menu>
+          <summary class="inspector-trigger" title="Arrow style" aria-label="Arrow style">
+            <svg class="icon arrow-head-icon" aria-hidden="true"><use data-current-arrow-head href="#icon-arrow-style"></use></svg>
+            <svg class="icon chevron-icon" aria-hidden="true"><use href="#icon-chevron-down"></use></svg>
+          </summary>
+          <div class="inspector-menu arrow-head-options" role="menu" aria-label="Arrow style">
+            <button class="button arrow-head-button" data-arrow-head="none" type="button" title="No arrowheads" aria-label="No arrowheads">
+              <svg class="icon arrow-head-icon" aria-hidden="true"><use href="#icon-arrowhead-none"></use></svg>
+            </button>
+            <button class="button arrow-head-button" data-arrow-head="start" type="button" title="Left arrowhead" aria-label="Left arrowhead">
+              <svg class="icon arrow-head-icon" aria-hidden="true"><use href="#icon-arrowhead-start"></use></svg>
+            </button>
+            <button class="button arrow-head-button" data-arrow-head="end" type="button" title="Right arrowhead" aria-label="Right arrowhead">
+              <svg class="icon arrow-head-icon" aria-hidden="true"><use href="#icon-arrowhead-end"></use></svg>
+            </button>
+            <button class="button arrow-head-button" data-arrow-head="both" type="button" title="Double-sided arrowheads" aria-label="Double-sided arrowheads">
+              <svg class="icon arrow-head-icon" aria-hidden="true"><use href="#icon-arrowhead-both"></use></svg>
+            </button>
+          </div>
+        </details>
+
+        <span class="context-separator arrange-context-separator"></span>
+
+        <button id="lock-selection-btn" class="button icon-button" type="button" title="Lock selection" aria-label="Lock selection" aria-pressed="false">
+          <svg class="icon" aria-hidden="true"><use id="lock-selection-icon" href="#icon-lock"></use></svg>
+        </button>
+
+        <details class="inspector-menu-group arrange-control" data-inspector-menu>
+          <summary class="inspector-trigger" title="Arrange" aria-label="Arrange">
+            <svg class="icon" aria-hidden="true"><use href="#icon-arrange"></use></svg>
+            <svg class="icon chevron-icon" aria-hidden="true"><use href="#icon-chevron-down"></use></svg>
+          </summary>
+          <div class="inspector-menu arrange-menu" role="menu" aria-label="Arrange">
+            <button id="bring-front-btn" class="button icon-button" type="button" title="Bring to front" aria-label="Bring to front">
+              <svg class="icon" aria-hidden="true"><use href="#icon-front"></use></svg>
+            </button>
+            <button id="send-back-btn" class="button icon-button" type="button" title="Send to back" aria-label="Send to back">
+              <svg class="icon" aria-hidden="true"><use href="#icon-back"></use></svg>
+            </button>
+          </div>
+        </details>
+
+        <button id="duplicate-btn" class="button icon-button" type="button" title="Duplicate" aria-label="Duplicate">
+          <svg class="icon" aria-hidden="true"><use href="#icon-copy"></use></svg>
+        </button>
+        <button id="delete-selection-btn" class="button icon-button danger-button" type="button" title="Delete" aria-label="Delete">
+          <svg class="icon" aria-hidden="true"><use href="#icon-trash"></use></svg>
+        </button>
+
+        <textarea id="text-value-input" class="visually-hidden" aria-label="Selected text"></textarea>
+      </section>
+
+      <div id="export-menu" class="floating-menu export-menu" role="menu" aria-label="Image export options" hidden>
+        <button id="export-menu-png-btn" class="menu-button" type="button" role="menuitem">PNG</button>
+        <button id="export-menu-svg-btn" class="menu-button" type="button" role="menuitem">SVG</button>
+      </div>
+    </div>
+
+    <dialog id="library-dialog" class="side-dialog" aria-label="Boards">
+      <div class="dialog-head">
+        <h2>Boards</h2>
+        <button class="button icon-button" type="button" data-close-dialog="library-dialog" aria-label="Close boards">
+          <svg class="icon" aria-hidden="true"><use href="#icon-x"></use></svg>
+        </button>
+      </div>
+      <div id="board-list" class="board-list"></div>
+    </dialog>
+
+    <dialog id="command-dialog" class="command-dialog" aria-label="Command palette">
+      <div class="command-head">
+        <label for="command-input">Command</label>
+        <input id="command-input" class="command-input" type="search" autocomplete="off" placeholder="Search commands" aria-controls="command-list" />
+      </div>
+      <div id="command-list" class="command-list" role="listbox"></div>
+      <div class="command-foot">Enter to run / Esc to close</div>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script type="module" src="./assets/main.js"></script>
+  </body>
+</html>

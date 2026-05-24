@@ -1,0 +1,40 @@
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  test: {
+    include: ["tests/**/*.test.ts"],
+    environment: "node",
+    globals: true,
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html", "json-summary"],
+      reportsDirectory: "coverage",
+      include: ["src/**/*.ts"],
+      exclude: [
+        "**/interfaces/*.ts",
+        "**/interfaces/**/*.ts",
+        "src/**/index.ts",
+        "src/config/**/*.ts",
+        "src/presentation/app.ts",
+        "src/presentation/appEventBindings.ts",
+        "src/presentation/boardFiles.ts",
+        "src/presentation/boardListController.ts",
+        "src/presentation/canvasPointerController.ts",
+        "src/presentation/clipboardController.ts",
+        "src/presentation/documentClickController.ts",
+        "src/presentation/dom.ts",
+        "src/presentation/exportMenu.ts",
+        "src/presentation/inspectorView.ts",
+        "src/presentation/inlineEditorController.ts",
+        "src/presentation/interaction.ts",
+        "src/presentation/keyboardController.ts",
+        "src/presentation/main.ts",
+        "src/presentation/pngExport.ts",
+        "src/presentation/shapeSelectorView.ts",
+        "src/presentation/svgRenderer.ts",
+        "src/presentation/theme.ts",
+        "src/presentation/viewportController.ts",
+      ],
+    },
+  },
+});

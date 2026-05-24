@@ -1,0 +1,18 @@
+---
+title: Local Data and Backups
+description: How MikroCanvas stores local boards.
+---
+
+MikroCanvas stores boards in browser IndexedDB. Data stays in the current browser profile unless you export it or the browser profile syncs storage through its own features.
+
+## Storage availability
+
+If IndexedDB is unavailable, MikroCanvas keeps the current board in memory for the session and shows the board surface so work can continue. Export JSON before leaving the page in that situation.
+
+## Backups
+
+Use JSON export for portable backups. A JSON board file can be shared as an attachment, stored with project files, or kept in normal file storage.
+
+## Browser data clearing
+
+Clearing site data, browser storage, or the browser profile can remove local boards. Export important boards before clearing data.

@@ -1,0 +1,14 @@
+---
+title: Configuration
+description: Runtime and browser configuration for MikroCanvas.
+---
+
+MikroCanvas is a static local-first app. There is no server-side secrets file, no API base URL, and no auth runtime to configure.
+
+## Browser Runtime
+
+Boards are stored in IndexedDB for the current browser profile and origin. Moving the app to another origin creates a separate browser storage area.
+
+## Deployment Settings
+
+Any static host that serves HTML, CSS, JavaScript, SVG, PNG, ICO, and web manifest files is enough. Configure caching so `index.html` can update quickly while hashed app assets can be cached longer.

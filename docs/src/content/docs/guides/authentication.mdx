@@ -1,0 +1,10 @@
+---
+title: Authentication
+description: Authentication boundary for MikroCanvas.
+---
+
+MikroCanvas does not include application accounts or sign-in. It is local-first: boards stay in the browser storage area for the current origin.
+
+If a deployment needs access control, put MikroCanvas behind the hosting platform's authentication, a private network, or a reverse proxy. The app itself should remain unaware of those credentials.
+
+This keeps the product surface simple and avoids adding account state to local board files.

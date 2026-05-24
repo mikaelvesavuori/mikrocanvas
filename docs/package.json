@@ -1,0 +1,35 @@
+{
+  "name": "mikrocanvas-docs",
+  "type": "module",
+  "version": "1.0.0",
+  "keywords": [
+    "mikrocanvas",
+    "documentation",
+    "docs",
+    "starlight"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mikaelvesavuori/mikrocanvas.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mikaelvesavuori/mikrocanvas/issues"
+  },
+  "homepage": "https://github.com/mikaelvesavuori/mikrocanvas#readme",
+  "private": true,
+  "description": "The documentation site for MikroCanvas.",
+  "author": "MikroCanvas",
+  "license": "MIT",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "latest",
+    "astro": "latest",
+    "typescript": "6"
+  }
+}

@@ -1,0 +1,20 @@
+---
+title: Import and Export
+description: Move MikroCanvas boards between browsers and hosts.
+---
+
+Use JSON export when you want a durable backup or need to move a board to another browser profile, machine, or deployment. MikroCanvas board files include the board title, viewport, elements, style information, and timestamps.
+
+## Export formats
+
+- JSON exports a `.mikrocanvas.json` file that can be imported later.
+- SVG exports a portable vector image.
+- PNG exports a raster image for sharing in tools that do not handle SVG well.
+
+## Import
+
+Import accepts MikroCanvas JSON board files. Imported boards are copied into local storage as new boards so the source file remains an external backup.
+
+## Backup habit
+
+For important boards, keep a JSON export next to the project it describes. Browser storage is convenient, but explicit files are better for long-lived records.

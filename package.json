@@ -1,0 +1,63 @@
+{
+  "name": "mikrocanvas",
+  "version": "1.0.0",
+  "description": "MikroCanvas is the minimalist visual canvas that's all yours.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Mikael Vesavuori",
+  "keywords": [
+    "diagram",
+    "whiteboard",
+    "figjam",
+    "local-first",
+    "indexeddb",
+    "self-hosted"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mikaelvesavuori/mikrocanvas.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mikaelvesavuori/mikrocanvas/issues"
+  },
+  "homepage": "https://github.com/mikaelvesavuori/mikrocanvas#readme",
+  "scripts": {
+    "start": "npm run build && npx http-server dist -a ${HOST:-127.0.0.1} -p ${PORT:-8000} -c-1",
+    "docs": "npm run docs:install && npm --prefix docs run dev",
+    "docs:build": "npm run docs:install && npm --prefix docs run build",
+    "docs:preview": "npm run docs:install && npm --prefix docs run preview",
+    "clean": "rm -rf dist coverage",
+    "assets": "node ../scripts/generate-product-icons.mjs --product mikrocanvas",
+    "build": "tsx esbuild.config.mts",
+    "test": "vitest run --config vitest.config.mts --coverage",
+    "test:watch": "vitest --config vitest.config.mts",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src tests scripts esbuild.config.mts vitest.config.mts package.json tsconfig.json biome.json",
+    "lint:fix": "biome check src tests scripts esbuild.config.mts vitest.config.mts package.json tsconfig.json biome.json --write",
+    "format": "biome format --write src tests scripts esbuild.config.mts vitest.config.mts package.json tsconfig.json biome.json",
+    "verify": "npm run lint && npm run typecheck && npm run test && npm run build && npm run docs:build",
+    "release": "npm run build && npm run sbom && npm run scan && npm run licenses && npm run release:assets",
+    "release:assets": "node scripts/create-release-assets.mjs",
+    "sbom": "node scripts/create-prod-sbom.mjs",
+    "scan": "mkdir -p security && grype sbom:security/sbom.spdx.json -o json > security/grype-report.json",
+    "licenses": "mkdir -p security && grant check security/sbom.spdx.json --config .grant.yaml > security/grant-report.txt || { cat security/grant-report.txt; exit 1; }",
+    "precommit": "npm run lint && npm run typecheck && npm run test",
+    "prepare": "husky",
+    "docs:install": "npm --prefix docs ci"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.15",
+    "@types/node": "25",
+    "@vitest/coverage-v8": "4",
+    "esbuild": "latest",
+    "fake-indexeddb": "6",
+    "http-server": "14",
+    "tsx": "4",
+    "typescript": "6",
+    "vitest": "4",
+    "husky": "9.1.7"
+  },
+  "workspaces": [
+    "docs"
+  ]
+}

@@ -49,24 +49,61 @@ function bindCanvasEvents({
   canvasPointer,
   viewportController,
 }: Pick<AppEventBindingOptions, "canvasPointer" | "viewportController">) {
-  elements.canvasStage.addEventListener("pointerdown", (event) =>
-    canvasPointer.handlePointerDown(event),
-  );
-  elements.canvasStage.addEventListener("pointermove", (event) =>
-    canvasPointer.handlePointerMove(event),
-  );
-  elements.canvasStage.addEventListener("pointerup", (event) =>
-    canvasPointer.handlePointerUp(event),
-  );
-  elements.canvasStage.addEventListener("pointercancel", (event) =>
-    canvasPointer.handlePointerUp(event),
-  );
-  elements.canvasStage.addEventListener("dblclick", (event) =>
-    canvasPointer.handleDoubleClick(event),
-  );
+  elements.canvasStage.addEventListener("pointerdown", (event) => {
+    if (viewportController.handlePointerDown(event)) {
+      canvasPointer.cancelInteraction();
+      return;
+    }
+
+    canvasPointer.handlePointerDown(event);
+  });
+  elements.canvasStage.addEventListener("pointermove", (event) => {
+    if (viewportController.handlePointerMove(event)) {
+      canvasPointer.cancelInteraction();
+      return;
+    }
+
+    canvasPointer.handlePointerMove(event);
+  });
+  elements.canvasStage.addEventListener("pointerup", (event) => {
+    if (viewportController.handlePointerUp(event)) {
+      canvasPointer.cancelInteraction();
+      return;
+    }
+
+    canvasPointer.handlePointerUp(event);
+  });
+  elements.canvasStage.addEventListener("pointercancel", (event) => {
+    if (viewportController.handlePointerUp(event)) {
+      canvasPointer.cancelInteraction();
+      return;
+    }
+
+    canvasPointer.handlePointerUp(event);
+  });
+  elements.canvasStage.addEventListener("dblclick", (event) => {
+    if (!isEditableTextTarget(event.target)) {
+      event.preventDefault();
+    }
+    canvasPointer.handleDoubleClick(event);
+  });
+  elements.canvasStage.addEventListener("selectstart", (event) => {
+    if (!isEditableTextTarget(event.target)) {
+      event.preventDefault();
+    }
+  });
   elements.canvasStage.addEventListener("wheel", (event) => viewportController.handleWheel(event), {
     passive: false,
   });
+}
+
+function isEditableTextTarget(target: EventTarget | null) {
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLSelectElement ||
+    target instanceof HTMLTextAreaElement ||
+    (target instanceof HTMLElement && target.isContentEditable)
+  );
 }
 
 function bindBoardEvents({
@@ -177,6 +214,7 @@ function bindInspectorEvents({
   elements.boldTextButton.addEventListener("click", toggleBoldText);
   elements.italicTextButton.addEventListener("click", toggleItalicText);
   elements.inlineEditor.addEventListener("blur", () => inlineEditor.close(true));
+  elements.inlineEditor.addEventListener("input", () => inlineEditor.handleInput());
   elements.inlineEditor.addEventListener("keydown", (event) => inlineEditor.handleKeydown(event));
 }
 

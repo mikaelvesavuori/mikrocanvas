@@ -10,7 +10,7 @@ describe("launch readiness assets", () => {
       version?: string;
     };
 
-    expect(packageJson.version).toBe("1.0.0");
+    expect(packageJson.version).toBe("1.0.1");
     expect(packageJson.repository).toBeTruthy();
     expect(packageJson.bugs).toBeTruthy();
     expect(packageJson.homepage).toContain("mikrocanvas");
@@ -48,6 +48,7 @@ describe("launch readiness assets", () => {
     expect(app).toContain("openCommandPalette");
     expect(html).toContain('aria-label="History and zoom controls"');
     expect(html).toContain('aria-label="Command palette"');
+    expect(html).toContain("viewport-fit=cover");
     expect(html).toContain('aria-pressed="true"');
     expect(html).toContain("#icon-grid");
     expect(html.indexOf('id="undo-btn"')).toBeGreaterThan(html.indexOf('class="zoom-cluster"'));
@@ -109,12 +110,16 @@ describe("launch readiness assets", () => {
 
   it("keeps compact viewport controls scrollable instead of overlapping", () => {
     const css = readFileSync("src/ui/styles.css", "utf8");
+    const appEventBindings = readFileSync("src/presentation/appEventBindings.ts", "utf8");
 
     expect(css).toContain(".top-bar::before");
     expect(css).toContain(".top-bar:hover,\n.top-bar:focus-within");
     expect(css).toContain("opacity: 0");
     expect(css).toContain("transform: translate(-50%, -8px)");
     expect(css).toContain("@media (max-width: 760px)");
+    expect(css).toContain("@media (hover: none), (pointer: coarse)");
+    expect(css).toContain("--safe-bottom: env(safe-area-inset-bottom, 0px)");
+    expect(css).toContain("height: 100dvh");
     expect(css).toContain('.canvas-stage[data-grid="hidden"]');
     expect(css).toContain(".action-cluster");
     expect(css).toContain("overflow-x: auto");
@@ -124,10 +129,15 @@ describe("launch readiness assets", () => {
     expect(css).toContain("transform: translate(-50%, 0)");
     expect(css).toContain(':root[data-theme="dark"] .element-text.is-free-text.is-bare-text');
     expect(css).toContain(".inline-editor");
+    expect(css).toContain("user-select: none");
+    expect(css).toContain("-webkit-user-select: none");
     expect(css).toContain("border: 2px solid transparent");
     expect(css).toContain("background: transparent");
     expect(css).toContain("box-shadow: none");
     expect(css).toContain("textarea:focus-visible:not(.inline-editor)");
+    expect(appEventBindings).toContain('"selectstart"');
+    expect(appEventBindings).toContain("isEditableTextTarget");
+    expect(appEventBindings).toContain("viewportController.handlePointerDown");
     expect(css).not.toContain(".brand-name,\n  #theme-btn");
   });
 

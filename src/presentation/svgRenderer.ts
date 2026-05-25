@@ -31,6 +31,7 @@ const xhtmlNamespace = "http://www.w3.org/1999/xhtml";
 const automaticArrowLabelFill = "rgba(255,255,255,0.88)";
 
 export type SvgRenderContext = GeometryContext & {
+  editingElementId?: string | null;
   selectedIds?: ReadonlySet<string>;
   textTargetId?: string | null;
 };
@@ -64,11 +65,12 @@ export function renderElement(
   context: SvgRenderContext,
 ) {
   const selectedClass = context.selectedIds?.has(element.id) ? " is-selected" : "";
+  const isEditingText = context.editingElementId === element.id;
   if (element.type === "sticky") {
     return `<g class="diagram-element${selectedClass}" data-element-id="${escapeAttr(element.id)}">
       <rect x="${element.x}" y="${element.y}" width="${element.width}" height="${element.height}" rx="8" fill="${escapeAttr(element.style.fill)}" stroke="${escapeAttr(element.style.stroke)}" stroke-width="${element.style.strokeWidth}" filter="url(#soft-shadow)" />
       <path d="M ${element.x + element.width - 32} ${element.y + element.height} L ${element.x + element.width} ${element.y + element.height - 32} L ${element.x + element.width} ${element.y + element.height} Z" fill="rgba(255,255,255,0.42)" />
-      ${renderForeignText(element, element.x, element.y, element.width, element.height)}
+      ${isEditingText ? "" : renderForeignText(element, element.x, element.y, element.width, element.height)}
     </g>`;
   }
 
@@ -85,14 +87,14 @@ export function renderElement(
     return `<g class="diagram-element${selectedClass}" data-element-id="${escapeAttr(element.id)}">
       ${background}
       <rect x="${element.x}" y="${element.y}" width="${element.width}" height="${element.height}" rx="6" fill="transparent" stroke="transparent" />
-      ${renderForeignText(element, element.x, element.y, element.width, element.height, textClass)}
+      ${isEditingText ? "" : renderForeignText(element, element.x, element.y, element.width, element.height, textClass)}
     </g>`;
   }
 
   if (element.type === "shape") {
     return `<g class="diagram-element${selectedClass}" data-element-id="${escapeAttr(element.id)}">
       ${renderShapeGraphic(element)}
-      ${renderForeignText(element, element.x, element.y, element.width, element.height)}
+      ${isEditingText ? "" : renderForeignText(element, element.x, element.y, element.width, element.height)}
     </g>`;
   }
 
@@ -110,11 +112,19 @@ export function renderElement(
     const labelBackdropFill = shouldPaint(element.style.fill)
       ? element.style.fill
       : automaticArrowLabelFill;
+    const labelText = isEditingText
+      ? ""
+      : renderForeignText(element, label.x, label.y, label.width, label.height, "is-arrow-label", {
+          textWrapperClassName: "arrow-label-text-backdrop",
+          textWrapperStyle: `--arrow-label-backdrop: ${labelBackdropFill}`,
+        });
+    const labelHitbox = `<rect class="arrow-label-hitbox${selectedLabelClass}" data-arrow-label-id="${escapeAttr(element.id)}" x="${label.x}" y="${label.y}" width="${label.width}" height="${label.height}" rx="6" fill="transparent" />`;
+    const labelMarkup = element.text ? `${labelText}${labelHitbox}` : "";
     return `<g class="diagram-element${selectedClass}" data-element-id="${escapeAttr(element.id)}">
       <path d="${path}" fill="none" stroke="${escapeAttr(element.style.stroke)}" stroke-width="${element.style.strokeWidth + 1}" stroke-linecap="round" stroke-linejoin="round"${strokeDashAttr(element.style)} />
       ${renderArrowHeads(element, next, start, previous, end)}
       <path class="arrow-hit-path" d="${path}" fill="none" stroke="transparent" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" pointer-events="stroke" vector-effect="non-scaling-stroke" />
-      ${element.text ? `${renderForeignText(element, label.x, label.y, label.width, label.height, "is-arrow-label", { textWrapperClassName: "arrow-label-text-backdrop", textWrapperStyle: `--arrow-label-backdrop: ${labelBackdropFill}` })}<rect class="arrow-label-hitbox${selectedLabelClass}" data-arrow-label-id="${escapeAttr(element.id)}" x="${label.x}" y="${label.y}" width="${label.width}" height="${label.height}" rx="6" fill="transparent" />` : ""}
+      ${labelMarkup}
     </g>`;
   }
 
@@ -127,7 +137,7 @@ export function renderElement(
   return `<g class="diagram-element${selectedClass}" data-element-id="${escapeAttr(element.id)}">
     <rect x="${element.x}" y="${element.y}" width="${element.width}" height="${element.height}" rx="8" fill="${escapeAttr(element.style.fill)}" stroke="${escapeAttr(element.style.stroke)}" stroke-width="${element.style.strokeWidth}" filter="url(#soft-shadow)" />
     <circle cx="${element.x + 16}" cy="${element.y + 16}" r="7" fill="${escapeAttr(element.style.stroke)}" />
-    ${renderForeignText(element, element.x + 34, element.y + 8, Math.max(42, element.width - 44), Math.max(32, element.height - 16), "is-comment")}
+    ${isEditingText ? "" : renderForeignText(element, element.x + 34, element.y + 8, Math.max(42, element.width - 44), Math.max(32, element.height - 16), "is-comment")}
   </g>`;
 }
 
@@ -164,10 +174,11 @@ export function buildSvg(board: DiagramBoard, context: GeometryContext) {
       </filter>
       <style>
         .element-text{width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:12px;color:var(--element-text-color);font-size:var(--element-font-size);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-weight:var(--element-font-weight);font-style:var(--element-font-style);line-height:1.22;text-align:center;overflow:hidden;overflow-wrap:anywhere;box-sizing:border-box}
+        .element-text-content{display:-webkit-box;max-width:100%;min-width:0;overflow:hidden;overflow-wrap:anywhere;white-space:pre-wrap;-webkit-box-orient:vertical;-webkit-line-clamp:var(--element-line-clamp);line-clamp:var(--element-line-clamp)}
         .is-free-text{justify-content:flex-start;align-items:flex-start;padding:0;text-align:left}
         .is-comment{justify-content:flex-start;align-items:flex-start;padding:0;text-align:left}
         .is-arrow-label{padding:4px;text-align:center}
-        .arrow-label-text-backdrop{display:inline-block;max-width:100%;box-sizing:border-box;padding:2px 6px;border-radius:6px;background:var(--arrow-label-backdrop);overflow-wrap:anywhere}
+        .arrow-label-text-backdrop{box-sizing:border-box;padding:2px 6px;border-radius:6px;background:var(--arrow-label-backdrop)}
       </style>
     </defs>
     <rect x="${viewBox.x}" y="${viewBox.y}" width="${viewBox.width}" height="${viewBox.height}" fill="#f8fafc" />
@@ -184,12 +195,39 @@ function renderForeignText(
   className = "",
   options: { textWrapperClassName?: string; textWrapperStyle?: string } = {},
 ) {
+  const textWrapperClassName = options.textWrapperClassName
+    ? `${options.textWrapperClassName} element-text-content`
+    : "element-text-content";
   const text = options.textWrapperClassName
-    ? `<span class="${escapeAttr(options.textWrapperClassName)}"${options.textWrapperStyle ? ` style="${escapeAttr(options.textWrapperStyle)}"` : ""}>${escapeHtml(element.text)}</span>`
-    : escapeHtml(element.text);
+    ? `<span class="${escapeAttr(textWrapperClassName)}"${options.textWrapperStyle ? ` style="${escapeAttr(options.textWrapperStyle)}"` : ""}>${escapeHtml(element.text)}</span>`
+    : `<span class="${textWrapperClassName}">${escapeHtml(element.text)}</span>`;
+  const lineClamp = textLineClamp(
+    height,
+    element.style.fontSize,
+    className,
+    options.textWrapperClassName ? 2 : 0,
+  );
   return `<foreignObject data-element-id="${escapeAttr(element.id)}" x="${x}" y="${y}" width="${width}" height="${height}">
-    <div xmlns="${xhtmlNamespace}" data-element-id="${escapeAttr(element.id)}" class="element-text ${className}" style="--element-text-color: ${escapeAttr(element.style.text)}; --element-font-size: ${element.style.fontSize}px; --element-font-weight: ${cssFontWeight(element.style, className === "is-comment" ? 500 : 650)}; --element-font-style: ${cssFontStyle(element.style)};">${text}</div>
+    <div xmlns="${xhtmlNamespace}" data-element-id="${escapeAttr(element.id)}" class="element-text ${className}" style="--element-text-color: ${escapeAttr(element.style.text)}; --element-font-size: ${element.style.fontSize}px; --element-font-weight: ${cssFontWeight(element.style, className === "is-comment" ? 500 : 650)}; --element-font-style: ${cssFontStyle(element.style)}; --element-line-clamp: ${lineClamp};">${text}</div>
   </foreignObject>`;
+}
+
+function textLineClamp(height: number, fontSize: number, className: string, wrapperPaddingY = 0) {
+  const lineHeight = fontSize * 1.22;
+  const availableHeight = height - textPaddingY(className) * 2 - wrapperPaddingY * 2;
+  return Math.max(1, Math.floor(availableHeight / lineHeight));
+}
+
+function textPaddingY(className: string) {
+  if (className.includes("is-free-text") || className.includes("is-comment")) {
+    return 0;
+  }
+
+  if (className.includes("is-arrow-label")) {
+    return 4;
+  }
+
+  return 12;
 }
 
 function renderTextBackground(

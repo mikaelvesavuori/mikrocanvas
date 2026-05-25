@@ -309,6 +309,7 @@ function renderBoard(board: DiagramBoard | null) {
   elements.overlayLayer.setAttribute("transform", transform);
   const renderContext = {
     ...geometryContext,
+    editingElementId: inlineEditor.activeElementId,
     selectedIds,
     textTargetId: selectedTextTargetId,
   };

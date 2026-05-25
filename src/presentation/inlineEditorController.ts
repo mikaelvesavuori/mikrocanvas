@@ -21,8 +21,15 @@ type InlineEditorControllerOptions = {
 
 export class InlineEditorController {
   private editingElementId: string | null = null;
+  private editorPlacement: "center" | "start" = "start";
+  private editorHorizontalPadding = 10;
+  private measurementElement: HTMLDivElement | null = null;
 
   constructor(private readonly options: InlineEditorControllerOptions) {}
+
+  get activeElementId() {
+    return this.editingElementId;
+  }
 
   open(id: string) {
     const board = this.options.getBoard();
@@ -45,11 +52,13 @@ export class InlineEditorController {
     );
     elements.inlineEditor.style.fontStyle = cssFontStyle(element.style);
     elements.inlineEditor.style.color = editorTextColor(element);
-    elements.inlineEditor.style.textAlign = element.type === "arrow" ? "center" : "";
+    this.applyTextPlacement(element);
     elements.inlineEditor.classList.add("is-open");
+    this.centerEditorText();
     this.options.render();
     this.focus(id);
     window.requestAnimationFrame(() => {
+      this.centerEditorText();
       this.focus(id);
     });
   }
@@ -64,8 +73,13 @@ export class InlineEditorController {
     this.editingElementId = null;
     elements.inlineEditor.classList.remove("is-open");
     if (save && board) {
-      void this.options.updateText(board, id, elements.inlineEditor.value);
+      void this.options.updateText(board, id, elements.inlineEditor.value).finally(() => {
+        this.options.render();
+      });
+      return;
     }
+
+    this.options.render();
   }
 
   handleKeydown(event: KeyboardEvent) {
@@ -78,6 +92,10 @@ export class InlineEditorController {
       event.preventDefault();
       this.close(true);
     }
+  }
+
+  handleInput() {
+    this.centerEditorText();
   }
 
   private focus(id: string) {
@@ -118,6 +136,62 @@ export class InlineEditorController {
       height: clamp(height * viewport.zoom, 58, 360),
     };
   }
+
+  private applyTextPlacement(element: DiagramElement) {
+    this.editorPlacement = shouldCenterEditorText(element) ? "center" : "start";
+    this.editorHorizontalPadding = element.type === "arrow" ? 4 : 10;
+    elements.inlineEditor.style.textAlign = this.editorPlacement === "center" ? "center" : "left";
+    elements.inlineEditor.style.padding = `10px ${this.editorHorizontalPadding}px`;
+  }
+
+  private centerEditorText() {
+    if (this.editorPlacement !== "center" || !this.editingElementId) {
+      return;
+    }
+
+    const editor = elements.inlineEditor;
+    const textHeight = this.measureEditorTextHeight(editor);
+    const verticalPadding = Math.max(4, (editor.clientHeight - textHeight) / 2);
+    editor.style.padding = `${verticalPadding}px ${this.editorHorizontalPadding}px`;
+  }
+
+  private measureEditorTextHeight(editor: HTMLTextAreaElement) {
+    const measurementElement = this.getMeasurementElement();
+    const computed = window.getComputedStyle(editor);
+    const width = Math.max(1, editor.clientWidth - this.editorHorizontalPadding * 2);
+    measurementElement.style.width = `${width}px`;
+    measurementElement.style.font = computed.font;
+    measurementElement.style.fontStyle = computed.fontStyle;
+    measurementElement.style.fontWeight = computed.fontWeight;
+    measurementElement.style.fontSize = computed.fontSize;
+    measurementElement.style.lineHeight = computed.lineHeight;
+    measurementElement.textContent = editor.value || " ";
+
+    const lineHeight =
+      Number.parseFloat(computed.lineHeight) || Number.parseFloat(computed.fontSize) * 1.25;
+    return Math.max(lineHeight, measurementElement.getBoundingClientRect().height);
+  }
+
+  private getMeasurementElement() {
+    if (this.measurementElement?.isConnected) {
+      return this.measurementElement;
+    }
+
+    this.measurementElement = document.createElement("div");
+    this.measurementElement.style.position = "fixed";
+    this.measurementElement.style.left = "-9999px";
+    this.measurementElement.style.top = "-9999px";
+    this.measurementElement.style.visibility = "hidden";
+    this.measurementElement.style.whiteSpace = "pre-wrap";
+    this.measurementElement.style.overflowWrap = "anywhere";
+    this.measurementElement.style.pointerEvents = "none";
+    document.body.append(this.measurementElement);
+    return this.measurementElement;
+  }
+}
+
+function shouldCenterEditorText(element: DiagramElement) {
+  return element.type === "sticky" || element.type === "shape" || element.type === "arrow";
 }
 
 function editorTextColor(element: DiagramElement) {

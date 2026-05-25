@@ -130,7 +130,13 @@ function createPointerController({
     render: vi.fn(),
   });
 
-  return { boardService, controller, getSelectedIds: () => selectedIds, openInlineEditor };
+  return {
+    boardService,
+    controller,
+    getActiveTool: () => activeTool,
+    getSelectedIds: () => selectedIds,
+    openInlineEditor,
+  };
 }
 
 function pointerEvent(
@@ -182,7 +188,7 @@ describe("canvas pointer controller", () => {
 
   it("centers newly created shapes on the pointer location", async () => {
     const board = Board.create("Creation test", "2026-01-01T00:00:00.000Z");
-    const { boardService, controller, getSelectedIds } = createPointerController({
+    const { boardService, controller, getActiveTool, getSelectedIds } = createPointerController({
       board,
       tool: "rectangle",
     });
@@ -200,6 +206,7 @@ describe("canvas pointer controller", () => {
       height: 110,
     });
     expect(getSelectedIds()).toEqual(new Set([shape?.id]));
+    expect(getActiveTool()).toBe("select");
   });
 
   it("uses the remembered arrow route when creating new arrows", async () => {

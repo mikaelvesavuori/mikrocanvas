@@ -72,6 +72,21 @@ export class CanvasPointerController {
     return this.currentInteraction;
   }
 
+  cancelInteraction() {
+    if (!this.currentInteraction) {
+      return;
+    }
+
+    try {
+      this.options.stage.releasePointerCapture(this.currentInteraction.pointerId);
+    } catch {
+      // The browser may already have released capture while changing touch gesture state.
+    }
+    this.currentInteraction = null;
+    this.options.stage.classList.remove("is-dragging", "is-panning");
+    this.options.render();
+  }
+
   handlePointerDown(event: PointerEvent) {
     if (event.button !== 0 || !this.options.getBoard()) {
       return;
@@ -915,6 +930,7 @@ export class CanvasPointerController {
     const nextBoard = this.options.commandService.addElement(board, element);
     if (isShapeTool(tool)) {
       void this.options.boardService.replaceActiveBoard(nextBoard).then(() => {
+        this.options.setTool("select");
         this.options.render();
       });
       return;

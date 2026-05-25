@@ -57,6 +57,45 @@ describe("svg renderer", () => {
     expect(renderElement(board, backedText, geometry)).not.toContain("is-bare-text");
   });
 
+  it("suppresses rendered element text while inline editing", () => {
+    const board = Board.create("Text edit render", "2026-01-01T00:00:00.000Z");
+    const text = commandService.createElement(
+      "text",
+      { x: 0, y: 0 },
+      {
+        id: "text",
+        style: { fill: "#ffffff" },
+        text: "Previous value",
+      },
+    );
+    const markup = renderElement(board, text, {
+      ...geometry,
+      editingElementId: "text",
+    });
+
+    expect(markup).toContain('data-element-id="text"');
+    expect(markup).toContain('fill="#ffffff"');
+    expect(markup).not.toContain("<foreignObject");
+    expect(markup).not.toContain("Previous value");
+  });
+
+  it("clamps rendered text to the element height", () => {
+    const board = Board.create("Text clamp render", "2026-01-01T00:00:00.000Z");
+    const text = commandService.createElement(
+      "text",
+      { x: 0, y: 0 },
+      {
+        id: "text",
+        size: { height: 68 },
+        text: "A long block of text that should stay bounded by the element",
+      },
+    );
+    const markup = renderElement(board, text, geometry);
+
+    expect(markup).toContain('class="element-text-content"');
+    expect(markup).toContain("--element-line-clamp: 2");
+  });
+
   it("renders extended shape variants", () => {
     const board = Board.create("Shape render", "2026-01-01T00:00:00.000Z");
     const documentShape = commandService.createElement("document", { x: 0, y: 0 });
@@ -115,7 +154,8 @@ describe("svg renderer", () => {
     expect(markup).toContain("is-selected-arrow-label");
     expect(markup).toContain("--element-font-weight: 800");
     expect(markup).toContain("--element-font-style: italic");
-    expect(markup).toContain('class="arrow-label-text-backdrop"');
+    expect(markup).toContain("arrow-label-text-backdrop");
+    expect(markup).toContain("element-text-content");
     expect(markup).toContain("--arrow-label-backdrop: #ffffff");
   });
 
@@ -131,9 +171,25 @@ describe("svg renderer", () => {
     } satisfies ArrowElement;
     const markup = renderElement(boardWith(arrow), arrow, geometry);
 
-    expect(markup).toContain('class="arrow-label-text-backdrop"');
+    expect(markup).toContain("arrow-label-text-backdrop");
     expect(markup).toContain("--arrow-label-backdrop: rgba(255,255,255,0.88)");
     expect(markup).not.toContain('class="arrow-label-backdrop"');
+  });
+
+  it("keeps arrow label hitboxes but hides label text while inline editing", () => {
+    const baseArrow = arrowWithHead("end");
+    const arrow = {
+      ...baseArrow,
+      text: "Editable label",
+    } satisfies ArrowElement;
+    const markup = renderElement(boardWith(arrow), arrow, {
+      ...geometry,
+      editingElementId: arrow.id,
+    });
+
+    expect(markup).toContain('class="arrow-label-hitbox"');
+    expect(markup).not.toContain("Editable label");
+    expect(markup).not.toContain("arrow-label-text-backdrop");
   });
 
   it("shows a lock badge instead of resize handles for locked selections", () => {

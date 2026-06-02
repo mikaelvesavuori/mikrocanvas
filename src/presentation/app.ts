@@ -1,6 +1,7 @@
-import { BoardService } from "../application/index.js";
+import { BoardService, type BoardRepository } from "../application/index.js";
+import { createDefaultRuntimeConfig, type RuntimeConfig } from "../config/index.js";
 import { DiagramCommandService } from "../domain/index.js";
-import { IndexedDbBoardRepository } from "../infrastructure/index.js";
+import { IndexedDbBoardRepository, RuntimeBoardRepository } from "../infrastructure/index.js";
 import type {
   ArrowElement,
   ArrowHead,
@@ -42,7 +43,8 @@ import { renderOverlayLayer, renderWorldLayer } from "./svgRenderer.js";
 import { applyStoredTheme, toggleTheme } from "./theme.js";
 import { ViewportController } from "./viewportController.js";
 
-const boardService = new BoardService(new IndexedDbBoardRepository());
+const runtimeRepository = new RuntimeBoardRepository(new IndexedDbBoardRepository());
+const boardService = new BoardService(runtimeRepository);
 const commandService = new DiagramCommandService();
 const clipboardController = new ClipboardController(commandService);
 const geometryContext: GeometryContext = {
@@ -61,6 +63,7 @@ let activeShapeTool: ShapeTool = "rectangle";
 let activeArrowRoute: ArrowRoute = "straight";
 let selectedIds = new Set<string>();
 let selectedTextTargetId: string | null = null;
+let runtimeConfig = createDefaultRuntimeConfig();
 let toastTimer = 0;
 let spacePressed = false;
 const inlineEditor = new InlineEditorController({
@@ -165,6 +168,11 @@ export class MikroCanvasApp {
   }
 }
 
+export function configureRuntime(config: RuntimeConfig, repository: BoardRepository) {
+  runtimeConfig = config;
+  runtimeRepository.use(repository);
+}
+
 async function boot() {
   applyStoredTheme();
   bindEvents();
@@ -174,7 +182,7 @@ async function boot() {
     retainSelectedTextTarget();
     render();
   });
-  await boardService.boot();
+  await boardService.boot({ initialBoardId: getInitialOnlineBoardId() });
 }
 
 function bindEvents() {
@@ -237,6 +245,8 @@ function buildCommandActions() {
     canUndo: appState.canUndo,
     gridVisible: isGridVisible(appState.activeBoard),
     hasSelection: selectedIds.size > 0,
+    onlineBoardId: appState.activeBoard?.id,
+    onlineBoardsEnabled: onlineBoardsEnabled(),
     selectionLocked: selectedElements.length > 0 && selectedElements.every(isElementLocked),
     actions: {
       bringToFront: () => reorderSelection("front"),
@@ -257,6 +267,7 @@ function buildCommandActions() {
       openBoards: openBoardLibrary,
       pasteSelection,
       redo: () => boardService.redo(),
+      copyOnlineBoardLink,
       selectAll: selectAllElements,
       sendToBack: () => reorderSelection("back"),
       setTool,
@@ -274,6 +285,7 @@ function buildCommandActions() {
 
 function render() {
   const board = appState.activeBoard;
+  syncOnlineBoardUrl(board);
   elements.undoButton.disabled = !appState.canUndo;
   elements.redoButton.disabled = !appState.canRedo;
   elements.canvasStage.dataset.tool = spacePressed ? "hand" : activeTool;
@@ -719,4 +731,51 @@ function showToast(message: string) {
   toastTimer = window.setTimeout(() => {
     elements.toast.classList.remove("is-visible");
   }, 2200);
+}
+
+async function copyOnlineBoardLink() {
+  const board = appState.activeBoard;
+  if (!board || !onlineBoardsEnabled()) {
+    return;
+  }
+
+  const url = createOnlineBoardUrl(board.id).toString();
+
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast("Online board link copied");
+  } catch {
+    window.prompt("Board link", url);
+  }
+}
+
+function syncOnlineBoardUrl(board: DiagramBoard | null) {
+  if (!board || !onlineBoardsEnabled()) {
+    return;
+  }
+
+  const url = createOnlineBoardUrl(board.id);
+  if (url.toString() !== window.location.href) {
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+}
+
+function getInitialOnlineBoardId(): string | null {
+  if (!onlineBoardsEnabled()) {
+    return null;
+  }
+
+  const url = new URL(window.location.href);
+  const id = url.searchParams.get("board")?.trim();
+  return id || null;
+}
+
+function createOnlineBoardUrl(boardId: string): URL {
+  const url = new URL(window.location.href);
+  url.searchParams.set("board", boardId);
+  return url;
+}
+
+function onlineBoardsEnabled(): boolean {
+  return runtimeConfig.mode === "api" && runtimeConfig.onlineBoards.enabled;
 }

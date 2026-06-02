@@ -4,7 +4,7 @@
 
 ![MikroCanvas product view](./mikrocanvas.png)
 
-MikroCanvas is a lightweight local-first visual canvas for fast ad hoc thinking. It keeps boards in browser storage, exports portable JSON/SVG/PNG files, and runs as a static web app.
+MikroCanvas is a lightweight local-first visual canvas for fast ad hoc thinking. It keeps boards in browser storage by default, exports portable JSON/SVG/PNG files, and can also run with optional open-by-ID online board storage.
 
 _Use MikroCanvas online for free at [canvas.mikrosuite.com](https://canvas.mikrosuite.com). It runs directly in the browser over HTTPS, needs no account, and stores boards privately in browser storage for that site unless you export them._
 
@@ -12,7 +12,7 @@ _Use MikroCanvas online for free at [canvas.mikrosuite.com](https://canvas.mikro
 
 - **Own the board**: boards live in the browser until you export JSON, SVG, or PNG files.
 - **Think quickly**: sticky notes, shapes, arrows, text, drawing, and comments stay on one focused canvas.
-- **Deploy simply**: the app is static HTML, CSS, and JavaScript with no application server.
+- **Deploy simply**: run as static HTML/CSS/JavaScript or enable the small open-board API.
 - **Stay portable**: exported board files can move between MikroCanvas installs.
 
 ## Features
@@ -26,7 +26,7 @@ _Use MikroCanvas online for free at [canvas.mikrosuite.com](https://canvas.mikro
 - **Board library** with create, rename, duplicate, delete, import, and export
 - **Undo and redo** for board edits
 - **SVG and PNG export**
-- **Static deployment** for any host that can serve HTML, CSS, and JavaScript
+- **Static deployment** for local-first hosting, plus optional API-backed online boards
 
 ## Quick Start
 
@@ -39,7 +39,7 @@ curl -sSL -o mikrocanvas.zip https://releases.mikrosuite.com/mikrocanvas_latest.
 unzip mikrocanvas.zip -d mikrocanvas
 ```
 
-Serve the extracted files with any static web server. For a quick local check:
+Serve the extracted files with any static web server for local-first boards. For a quick local check:
 
 ```bash
 cd mikrocanvas/*
@@ -50,7 +50,19 @@ Open `http://127.0.0.1:8000`.
 
 ## Runtime Configuration
 
-MikroCanvas is a static local-first app. It has no server-side secrets file, no API base URL, and no built-in account system. Boards are stored in IndexedDB for the current browser profile and origin.
+MikroCanvas defaults to local mode through `config.json`:
+
+```json
+{
+  "mode": "local",
+  "apiBaseUrl": ".",
+  "onlineBoards": {
+    "enabled": false
+  }
+}
+```
+
+Run `npm start` from source to serve the built app with the optional API-backed board store. In API mode, boards are saved in SQLite and can be opened by URL with `?board=<board-id>`. There is no auth gate in this mode; the board ID is the access boundary.
 
 ## Release Downloads
 
@@ -63,7 +75,7 @@ GitHub Releases provide versioned archives for pinned deployments.
 ## Technology
 
 - **Frontend**: Vanilla HTML, CSS, and TypeScript compiled with esbuild
-- **Storage**: IndexedDB for browser-local boards
+- **Storage**: IndexedDB for browser-local boards, optional SQLite for open-by-ID online boards
 - **Build**: Prebuilt static release archive
 
 ## License

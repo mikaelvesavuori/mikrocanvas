@@ -15,6 +15,27 @@ describe("launch readiness assets", () => {
     expect(packageJson.bugs).toBeTruthy();
     expect(packageJson.homepage).toContain("mikrocanvas");
     expect(packageJson.scripts?.verify).toContain("docs:build");
+    expect(packageJson.scripts?.start).toContain("dist/server/server.mjs");
+    expect(packageJson.scripts?.["start:static"]).toContain("http-server");
+    expect(packageJson.scripts?.["build:api"]).toContain("--target api");
+  });
+
+  it("declares local runtime defaults and the optional online-board API", () => {
+    const runtimeConfig = JSON.parse(readFileSync("src/public/config.json", "utf8")) as {
+      mode?: string;
+      onlineBoards?: { enabled?: boolean };
+    };
+    const app = readFileSync("src/presentation/app.ts", "utf8");
+    const server = readFileSync("api/src/http/AppServer.ts", "utf8");
+
+    expect(runtimeConfig).toMatchObject({
+      mode: "local",
+      onlineBoards: { enabled: false },
+    });
+    expect(app).toContain("copyOnlineBoardLink");
+    expect(app).toContain("getInitialOnlineBoardId");
+    expect(server).toContain("/api/boards");
+    expect(server).toContain("createPublicRuntimeConfig");
   });
 
   it("keeps the app shell wired for board, import, export, and drawing controls", () => {

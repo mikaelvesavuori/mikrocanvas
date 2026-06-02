@@ -14,5 +14,5 @@
     "allowSyntheticDefaultImports": true,
     "types": ["node", "vitest/globals"]
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "*.mts"]
+  "include": ["api/**/*.ts", "src/**/*.ts", "tests/**/*.ts", "*.mts"]
 }

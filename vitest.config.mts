@@ -9,8 +9,9 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "html", "json-summary"],
       reportsDirectory: "coverage",
-      include: ["src/**/*.ts"],
+      include: ["api/**/*.ts", "src/**/*.ts"],
       exclude: [
+        "api/src/server.ts",
         "**/interfaces/*.ts",
         "**/interfaces/**/*.ts",
         "src/**/index.ts",

@@ -3,7 +3,9 @@ title: Local Data and Backups
 description: How MikroCanvas stores local boards.
 ---
 
-MikroCanvas stores boards in browser IndexedDB. Data stays in the current browser profile unless you export it or the browser profile syncs storage through its own features.
+MikroCanvas stores boards in browser IndexedDB when it runs in local mode. Data stays in the current browser profile unless you export it or the browser profile syncs storage through its own features.
+
+When online boards are enabled, boards are saved in the MikroCanvas API SQLite database instead. The browser keeps only a small local list of board IDs it has opened so the board library can show recently used online boards without exposing a public board directory.
 
 ## Storage availability
 
@@ -12,6 +14,8 @@ If IndexedDB is unavailable, MikroCanvas keeps the current board in memory for t
 ## Backups
 
 Use JSON export for portable backups. A JSON board file can be shared as an attachment, stored with project files, or kept in normal file storage.
+
+For API-backed boards, back up the SQLite database file configured with `databasePath`.
 
 ## Browser data clearing
 

@@ -11,10 +11,13 @@ export type CanvasCommandOptions = {
   canUndo: boolean;
   gridVisible: boolean;
   hasSelection: boolean;
+  onlineBoardId?: string;
+  onlineBoardsEnabled: boolean;
   selectionLocked: boolean;
   actions: {
     bringToFront: CommandRunner;
     clearSelection: CommandRunner;
+    copyOnlineBoardLink: CommandRunner;
     copySelection: CommandRunner;
     createBoard: CommandRunner;
     cutSelection: CommandRunner;
@@ -144,8 +147,12 @@ function shapeCommand(shape: ShapeTool, setTool: (tool: DiagramTool) => void): C
   };
 }
 
-function boardCommands({ actions }: CanvasCommandOptions): CommandAction[] {
-  return [
+function boardCommands({
+  actions,
+  onlineBoardId,
+  onlineBoardsEnabled,
+}: CanvasCommandOptions): CommandAction[] {
+  const commands: CommandAction[] = [
     {
       detail: "Create a new board",
       id: "new-board",
@@ -189,6 +196,18 @@ function boardCommands({ actions }: CanvasCommandOptions): CommandAction[] {
       title: "Export SVG",
     },
   ];
+
+  if (onlineBoardsEnabled && onlineBoardId) {
+    commands.push({
+      detail: "Copy a link that opens this board by ID",
+      id: "copy-online-link",
+      keywords: "share online link url cloud",
+      run: actions.copyOnlineBoardLink,
+      title: "Copy online board link",
+    });
+  }
+
+  return commands;
 }
 
 function viewCommands({

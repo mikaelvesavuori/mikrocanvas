@@ -115,6 +115,19 @@ describe("command palette", () => {
     );
   });
 
+  it("exposes online board links only when API boards are enabled", () => {
+    const localCommands = buildCanvasCommands(commandOptions());
+    const onlineCommands = buildCanvasCommands(
+      commandOptions({
+        onlineBoardId: "board_shared",
+        onlineBoardsEnabled: true,
+      }),
+    );
+
+    expect(localCommands.map((command) => command.id)).not.toContain("copy-online-link");
+    expect(onlineCommands.map((command) => command.id)).toContain("copy-online-link");
+  });
+
   it("only exposes selection commands when a selection exists", () => {
     const noSelection = buildCanvasCommands(commandOptions());
     const selected = buildCanvasCommands(
@@ -172,6 +185,8 @@ function commandOptions(
     canUndo: false,
     gridVisible: true,
     hasSelection: false,
+    onlineBoardId: undefined,
+    onlineBoardsEnabled: false,
     selectionLocked: false,
     actions: {
       bringToFront: noop,
@@ -189,6 +204,7 @@ function commandOptions(
       openBoards: noop,
       pasteSelection: noop,
       redo: noop,
+      copyOnlineBoardLink: noop,
       selectAll: noop,
       sendToBack: noop,
       setTool: (_tool: DiagramTool) => undefined,

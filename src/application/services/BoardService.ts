@@ -16,6 +16,10 @@ type ReplaceOptions = {
   persist?: boolean;
 };
 
+type BootOptions = {
+  initialBoardId?: string | null;
+};
+
 export class BoardService {
   private readonly commandService = new DiagramCommandService();
   private boards: DiagramBoardSummary[] = [];
@@ -27,10 +31,18 @@ export class BoardService {
 
   constructor(private readonly repository: BoardRepository) {}
 
-  async boot() {
+  async boot(options: BootOptions = {}) {
     try {
+      if (options.initialBoardId) {
+        const board = await this.repository.get(options.initialBoardId);
+        if (board) {
+          this.activeBoard = this.commandService.normalizeBoard(board);
+          this.boards = await this.repository.list();
+        }
+      }
+
       this.boards = await this.repository.list();
-      if (this.boards.length > 0) {
+      if (!this.activeBoard && this.boards.length > 0) {
         const board = await this.repository.get(this.boards[0]?.id ?? "");
         this.activeBoard = board ? this.commandService.normalizeBoard(board) : null;
       }

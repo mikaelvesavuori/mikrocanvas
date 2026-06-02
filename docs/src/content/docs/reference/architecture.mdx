@@ -3,15 +3,25 @@ title: Architecture
 description: Runtime overview for MikroCanvas.
 ---
 
-MikroCanvas is a static browser app with local board storage, import/export tools, and a presentation layer for drawing and editing.
+MikroCanvas is a browser app with local board storage by default, optional API-backed online board storage, import/export tools, and a presentation layer for drawing and editing.
 
 ## Runtime Boundaries
 
 - The app shell runs entirely in the browser.
 - IndexedDB stores boards for the current origin.
+- `config.json` selects local mode or API-backed online-board mode at startup.
+- In API mode, the browser reads and writes boards through `/api/boards/:id`.
 - Import and export are explicit user actions.
-- No backend API is required for normal drawing.
+- No backend API is required for normal local-first drawing.
+
+## API Mode
+
+The optional Node server serves the built app, runtime config, health/openapi endpoints, and board reads/writes by ID. Board JSON is stored in SQLite.
+
+The API does not expose a public board list. The browser remembers board IDs it has already opened so the board library can show recent online boards locally.
 
 ## Hosting
 
 Serve the extracted release archive from a stable origin. Browser storage is scoped to that origin, so moving the app to another domain gives the browser a separate board library.
+
+For API-backed boards, run the bundled server and back up the configured SQLite database file.

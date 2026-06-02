@@ -77,6 +77,20 @@ describe("BoardService", () => {
     );
   });
 
+  it("boots directly into an initial board ID when one is provided", async () => {
+    const repository = new MemoryBoardRepository();
+    const first = Board.create("First stored board", "2026-01-01T00:00:00.000Z");
+    const linked = Board.create("Linked online board", "2026-01-01T00:01:00.000Z");
+    await repository.save(first);
+    await repository.save(linked);
+
+    const service = new BoardService(repository);
+    await service.boot({ initialBoardId: linked.id });
+
+    expect(service.getState().activeBoard?.id).toBe(linked.id);
+    expect(service.getState().activeBoard?.title).toBe("Linked online board");
+  });
+
   it("tracks undo and redo for committed board edits", async () => {
     const commandService = new DiagramCommandService();
     const service = new BoardService(new MemoryBoardRepository());

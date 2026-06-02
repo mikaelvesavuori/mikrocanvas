@@ -3,11 +3,13 @@ title: Privacy and Security
 description: Privacy and security boundaries for MikroCanvas.
 ---
 
-MikroCanvas is local-first and does not send board data to a MikroCanvas service. Boards are stored in the browser profile with IndexedDB.
+MikroCanvas is local-first by default and stores boards in the browser profile with IndexedDB. Optional online boards use the MikroCanvas API and store board JSON in SQLite.
 
 ## Data movement
 
-Board data leaves the browser only when you export files, import files from disk, host the app through infrastructure that observes traffic, or use browser/profile features that sync local data.
+In local mode, board data leaves the browser only when you export files, import files from disk, host the app through infrastructure that observes traffic, or use browser/profile features that sync local data.
+
+In online-board mode, board data is sent to the configured MikroCanvas API. Online boards are open by ID: anyone with a copied board link can open, update, or delete that board.
 
 ## File handling
 
@@ -15,4 +17,6 @@ Imported JSON is parsed in the browser and normalized into a new local board. SV
 
 ## Threat model
 
-MikroCanvas is a static browser app. Its security posture depends on the browser, the host serving the files, and the care taken with exported board files.
+MikroCanvas local mode is a static browser app. Its security posture depends on the browser, the host serving the files, and the care taken with exported board files.
+
+Online-board mode intentionally has no auth gate. Treat board IDs as bearer secrets, use HTTPS in hosted deployments, and place the API behind network controls if links should not be reachable from the public internet.

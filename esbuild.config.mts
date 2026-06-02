@@ -10,6 +10,7 @@ const assetsDir = join(distDir, "assets");
 const packageVersion = JSON.parse(readFileSync("./package.json", "utf8")).version as string;
 const skippedExtensions = new Set([".css", ".html", ".js", ".mjs", ".ts", ".mts"]);
 const skippedNames = new Set([".DS_Store", "Thumbs.db"]);
+const target = getTarget();
 
 async function buildApp() {
   await build({
@@ -24,6 +25,27 @@ async function buildApp() {
     treeShaking: true,
     banner: {
       js: `/* MikroCanvas v${packageVersion} | ${new Date().toISOString()} */`,
+    },
+  });
+}
+
+async function buildApi() {
+  rmSync(join(distDir, "server"), { force: true, recursive: true });
+  mkdirSync(join(distDir, "server"), { recursive: true });
+
+  await build({
+    entryPoints: ["./api/src/server.ts"],
+    outfile: join(distDir, "server", "server.mjs"),
+    bundle: true,
+    external: ["node:*"],
+    format: "esm",
+    minify: true,
+    platform: "node",
+    sourcemap: false,
+    target: "node25",
+    treeShaking: true,
+    banner: {
+      js: `/* MikroCanvas Server v${packageVersion} | ${new Date().toISOString()} */`,
     },
   });
 }
@@ -62,20 +84,40 @@ function copyStatic(sourceDir: string, targetDir: string) {
 
 async function main() {
   const startedAt = Date.now();
-  rmSync(distDir, { force: true, recursive: true });
-  mkdirSync(assetsDir, { recursive: true });
 
-  await buildApp();
-  copyFile(join(uiDir, "styles.css"), join(assetsDir, "styles.css"));
-  copyFile(join(uiDir, "index.html"), join(distDir, "index.html"));
-  copyStatic(uiDir, distDir);
-  copyStatic(publicDir, distDir);
+  if (target === "app") {
+    rmSync(distDir, { force: true, recursive: true });
+    await buildStaticApp();
+  } else if (target === "api") {
+    await buildApi();
+  } else {
+    rmSync(distDir, { force: true, recursive: true });
+    await buildStaticApp();
+    await buildApi();
+  }
 
   const durationSeconds = ((Date.now() - startedAt) / 1000).toFixed(2);
   console.log(`Build completed in ${durationSeconds}s`);
   console.log("Output:");
   console.log(`  ${relative(process.cwd(), join(distDir, "index.html"))}`);
   console.log(`  ${relative(process.cwd(), join(assetsDir, "main.js"))}`);
+  if (target !== "app") {
+    console.log(`  ${relative(process.cwd(), join(distDir, "server", "server.mjs"))}`);
+  }
+}
+
+async function buildStaticApp() {
+  mkdirSync(assetsDir, { recursive: true });
+  await buildApp();
+  copyFile(join(uiDir, "styles.css"), join(assetsDir, "styles.css"));
+  copyFile(join(uiDir, "index.html"), join(distDir, "index.html"));
+  copyStatic(uiDir, distDir);
+  copyStatic(publicDir, distDir);
+}
+
+function getTarget() {
+  const targetIndex = process.argv.indexOf("--target");
+  return targetIndex >= 0 ? (process.argv[targetIndex + 1] ?? "all") : "all";
 }
 
 main().catch((error) => {

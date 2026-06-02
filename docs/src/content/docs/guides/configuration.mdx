@@ -3,12 +3,43 @@ title: Configuration
 description: Runtime and browser configuration for MikroCanvas.
 ---
 
-MikroCanvas is a static local-first app. There is no server-side secrets file, no API base URL, and no auth runtime to configure.
+MikroCanvas is local-first by default. It can run as a static app with IndexedDB storage, or with the optional MikroCanvas API for online boards that open when you have the board ID.
 
 ## Browser Runtime
 
 Boards are stored in IndexedDB for the current browser profile and origin. Moving the app to another origin creates a separate browser storage area.
 
+The static app reads `config.json` at startup:
+
+```json
+{
+  "mode": "local",
+  "apiBaseUrl": ".",
+  "onlineBoards": {
+    "enabled": false
+  }
+}
+```
+
+When the API server hosts the app it serves a runtime config with `mode: "api"`, `onlineBoards.enabled: true`, and `apiBaseUrl` pointing to the server.
+
+## Online Boards
+
+API-backed boards are open if you have the board ID. A URL containing `?board=<board-id>` can load that board from the API, and the command palette can copy the active online board link.
+
+There is no MikroAuth requirement for this mode. Treat board IDs and copied links as sensitive.
+
 ## Deployment Settings
 
 Any static host that serves HTML, CSS, JavaScript, SVG, PNG, ICO, and web manifest files is enough. Configure caching so `index.html` can update quickly while hashed app assets can be cached longer.
+
+The API server can be configured with `mikrocanvas.config.json`, environment variables, or CLI flags:
+
+```json
+{
+  "appUrl": "http://127.0.0.1:3000",
+  "databasePath": "data/mikrocanvas.sqlite",
+  "host": "127.0.0.1",
+  "port": 3000
+}
+```

@@ -16,9 +16,10 @@ describe("MikroCanvasDatabase", () => {
   it("saves, loads, revises, and deletes boards", () => {
     const board = Board.create("Online board", "2026-01-01T00:00:00.000Z");
 
-    const first = database.saveBoard(board);
+    const first = database.saveBoard(board, { deleteTokenHash: "hashed-token" });
     expect(first.revision).toBe(1);
     expect(database.getBoard(board.id)?.board).toEqual(board);
+    expect(database.getDeleteTokenHash(board.id)).toBe("hashed-token");
 
     const updated = {
       ...board,
@@ -28,6 +29,7 @@ describe("MikroCanvasDatabase", () => {
     const second = database.saveBoard(updated);
 
     expect(second.revision).toBe(2);
+    expect(database.getDeleteTokenHash(board.id)).toBe("hashed-token");
     expect(database.getBoard(board.id)).toMatchObject({
       board: {
         title: "Updated online board",

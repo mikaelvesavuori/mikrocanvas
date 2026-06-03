@@ -1,4 +1,5 @@
 {
+  "adminToken": "",
   "appUrl": "http://127.0.0.1:3000",
   "databasePath": "data/mikrocanvas.sqlite",
   "host": "127.0.0.1",

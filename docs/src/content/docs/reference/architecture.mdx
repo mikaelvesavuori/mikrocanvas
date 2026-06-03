@@ -20,6 +20,8 @@ The optional Node server serves the built app, runtime config, health/openapi en
 
 The API does not expose a public board list. The browser remembers board IDs it has already opened so the board library can show recent online boards locally.
 
+Deletes use a separate capability token stored by the creating browser. Servers can also be configured with an admin token for recovery operations.
+
 ## Hosting
 
 Serve the extracted release archive from a stable origin. Browser storage is scoped to that origin, so moving the app to another domain gives the browser a separate board library.

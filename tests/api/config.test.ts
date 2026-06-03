@@ -15,9 +15,12 @@ describe("MikroCanvas API config", () => {
       "http://127.0.0.1:4173",
       "--database-path",
       ":memory:",
+      "--admin-token",
+      "cli-admin-token-with-enough-length",
     ]);
 
     expect(config).toMatchObject({
+      adminToken: "cli-admin-token-with-enough-length",
       appUrl: "http://127.0.0.1:4173",
       databasePath: ":memory:",
       host: "0.0.0.0",
@@ -27,6 +30,7 @@ describe("MikroCanvas API config", () => {
 
   it("validates required network settings", () => {
     const result = validateConfig({
+      adminToken: "short",
       appUrl: "not-a-url",
       databasePath: "",
       host: "",
@@ -39,6 +43,7 @@ describe("MikroCanvas API config", () => {
         "appUrl must be a valid URL.",
         "databasePath is required.",
         "host is required.",
+        "adminToken must contain at least 24 characters when set.",
         "port must be an integer between 0 and 65535.",
       ]),
     );

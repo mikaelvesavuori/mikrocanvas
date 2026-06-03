@@ -62,7 +62,9 @@ MikroCanvas defaults to local mode through `config.json`:
 }
 ```
 
-Run `npm start` from source to serve the built app with the optional API-backed board store. In API mode, boards are saved in SQLite and can be opened by URL with `?board=<board-id>`. There is no auth gate in this mode; the board ID is the access boundary.
+Run `npm start` from source to serve the built app with the optional API-backed board store. In API mode, boards are saved in SQLite and can be opened by URL with `?board=<board-id>`. There is no auth gate in this mode; the board ID allows opening and editing.
+
+Deleting is guarded separately. The browser that creates an online board keeps a local delete token, and deployments may also configure an admin token for recovery.
 
 ## Release Downloads
 

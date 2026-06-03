@@ -4,6 +4,7 @@ import type {
   DiagramAppState,
   DiagramBoard,
   DiagramBoardSummary,
+  DiagramPersistenceState,
   ExportedDiagramFile,
 } from "../../interfaces/index.js";
 import { clone, nowIso } from "../../shared/index.js";
@@ -28,6 +29,7 @@ export class BoardService {
   private past: DiagramBoard[] = [];
   private future: DiagramBoard[] = [];
   private storageAvailable = true;
+  private persistence: DiagramPersistenceState = { status: "idle" };
 
   constructor(private readonly repository: BoardRepository) {}
 
@@ -53,8 +55,20 @@ export class BoardService {
         this.activeBoard = board;
         this.boards = await this.repository.list();
       }
+
+      if (this.activeBoard && this.persistence.status === "idle") {
+        this.persistence = {
+          status: "saved",
+          updatedAt: nowIso(),
+        };
+      }
     } catch {
       this.storageAvailable = false;
+      this.persistence = {
+        status: "error",
+        message: "Online save failed. Export JSON before leaving.",
+        updatedAt: nowIso(),
+      };
       this.activeBoard = this.createStarterBoard();
       this.boards = [Board.toSummary(this.activeBoard)];
     }
@@ -73,6 +87,7 @@ export class BoardService {
       boards: [...this.boards],
       activeBoard: this.activeBoard ? Board.clone(this.activeBoard) : null,
       storageAvailable: this.storageAvailable,
+      persistence: { ...this.persistence },
       canUndo: this.past.length > 0,
       canRedo: this.future.length > 0,
     };
@@ -142,15 +157,13 @@ export class BoardService {
 
   async deleteBoard(id: string) {
     if (this.boards.length <= 1) {
+      const deleted = await this.deleteStoredBoard(id);
+      if (!deleted) {
+        return;
+      }
+
       const replacement = this.createStarterBoard("Untitled board");
       await this.persistBoard(replacement);
-      if (this.storageAvailable) {
-        try {
-          await this.repository.delete(id);
-        } catch {
-          this.storageAvailable = false;
-        }
-      }
       this.activeBoard = replacement;
       this.past = [];
       this.future = [];
@@ -159,7 +172,11 @@ export class BoardService {
       return;
     }
 
-    await this.repository.delete(id);
+    const deleted = await this.deleteStoredBoard(id);
+    if (!deleted) {
+      return;
+    }
+
     await this.refreshBoardList();
     if (this.activeBoard?.id === id) {
       const nextId = this.boards[0]?.id;
@@ -319,10 +336,39 @@ export class BoardService {
       return;
     }
 
+    this.persistence = { status: "saving" };
     try {
       await this.repository.save(board);
+      this.storageAvailable = true;
+      this.persistence = {
+        status: "saved",
+        updatedAt: nowIso(),
+      };
     } catch {
-      this.storageAvailable = false;
+      this.persistence = {
+        status: "error",
+        message: "Online save failed. Export JSON before leaving.",
+        updatedAt: nowIso(),
+      };
+    }
+  }
+
+  private async deleteStoredBoard(id: string): Promise<boolean> {
+    try {
+      await this.repository.delete(id);
+      this.persistence = {
+        status: "saved",
+        updatedAt: nowIso(),
+      };
+      return true;
+    } catch {
+      this.persistence = {
+        status: "error",
+        message: "This browser cannot delete that online board.",
+        updatedAt: nowIso(),
+      };
+      this.emit();
+      return false;
     }
   }
 

@@ -209,6 +209,32 @@ h2 {
   background: var(--color-surface-muted);
 }
 
+.persistence-status {
+  flex: none;
+  min-width: 58px;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  background: color-mix(in srgb, var(--color-surface-muted) 82%, transparent);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1;
+  text-align: center;
+}
+
+.persistence-status[data-status="saved"] {
+  color: var(--color-accent);
+  border-color: color-mix(in srgb, var(--color-accent) 34%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent-soft) 52%, transparent);
+}
+
+.persistence-status[data-status="error"] {
+  color: var(--color-danger);
+  border-color: color-mix(in srgb, var(--color-danger) 34%, var(--color-border));
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+}
+
 .action-cluster {
   flex: none;
   gap: 5px;

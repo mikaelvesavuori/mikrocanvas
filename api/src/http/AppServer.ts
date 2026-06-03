@@ -1,3 +1,4 @@
+import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { createReadStream, existsSync, statSync } from "node:fs";
 import {
   createServer,
@@ -11,6 +12,8 @@ import { Board } from "../../../src/domain/index.js";
 import type { DiagramBoard } from "../../../src/interfaces/index.js";
 import type { MikroCanvasConfig } from "../config.js";
 import type { BoardSnapshot, MikroCanvasDatabase } from "../database/MikroCanvasDatabase.js";
+
+const deleteTokenHeader = "x-mikrocanvas-delete-token";
 
 export interface AppServerOptions {
   config: MikroCanvasConfig;
@@ -159,8 +162,13 @@ export class AppServer {
     if (request.method === "POST" && url.pathname === "/api/boards") {
       const input = await readJson<{ title?: string }>(request);
       const board = Board.create(input.title?.trim() || "Untitled board");
-      const snapshot = this.options.database.saveBoard(board);
-      sendBoard(response, 201, snapshot);
+      const deleteToken = createCapabilityToken();
+      const snapshot = this.options.database.saveBoard(board, {
+        deleteTokenHash: hashCapabilityToken(deleteToken),
+      });
+      sendBoard(response, 201, snapshot, {
+        "X-MikroCanvas-Delete-Token": deleteToken,
+      });
       return true;
     }
 
@@ -188,11 +196,30 @@ export class AppServer {
     if (request.method === "PUT") {
       const board = await readJson<DiagramBoard>(request);
       assertBoardInput(board, id);
-      sendBoard(response, 200, this.options.database.saveBoard(board));
+      sendBoard(
+        response,
+        200,
+        this.options.database.saveBoard(board, {
+          deleteTokenHash: hashOptionalCapabilityToken(getHeader(request, deleteTokenHeader)),
+        }),
+      );
       return true;
     }
 
     if (request.method === "DELETE") {
+      const snapshot = this.options.database.getBoard(id);
+      if (!snapshot) {
+        sendJson(response, 404, { error: "Board not found." });
+        return true;
+      }
+
+      if (!this.canDeleteBoard(request, id)) {
+        sendJson(response, 403, {
+          error: "Delete token or admin token is required to delete this board.",
+        });
+        return true;
+      }
+
       this.options.database.deleteBoard(id);
       response.writeHead(204, { "Cache-Control": "no-store" }).end();
       return true;
@@ -200,6 +227,16 @@ export class AppServer {
 
     sendJson(response, 405, { error: "Method not allowed." });
     return true;
+  }
+
+  private canDeleteBoard(request: IncomingMessage, id: string): boolean {
+    if (isAdminRequest(request, this.options.config.adminToken)) {
+      return true;
+    }
+
+    const storedHash = this.options.database.getDeleteTokenHash(id);
+    const providedHash = hashOptionalCapabilityToken(getHeader(request, deleteTokenHeader));
+    return Boolean(storedHash && providedHash && secureEqual(storedHash, providedHash));
   }
 }
 
@@ -244,8 +281,16 @@ function assertBoardInput(board: DiagramBoard, expectedId: string): void {
   }
 }
 
-function sendBoard(response: ServerResponse, statusCode: number, snapshot: BoardSnapshot): void {
-  sendJson(response, statusCode, snapshot.board, createBoardHeaders(snapshot));
+function sendBoard(
+  response: ServerResponse,
+  statusCode: number,
+  snapshot: BoardSnapshot,
+  headers: OutgoingHttpHeaders = {},
+): void {
+  sendJson(response, statusCode, snapshot.board, {
+    ...createBoardHeaders(snapshot),
+    ...headers,
+  });
 }
 
 function createBoardHeaders(snapshot: BoardSnapshot): Record<string, string> {
@@ -282,8 +327,48 @@ function applyCors(
     response.setHeader("Vary", "Origin");
   }
 
-  response.setHeader("Access-Control-Allow-Headers", "content-type, if-match, x-board-revision");
+  response.setHeader(
+    "Access-Control-Allow-Headers",
+    "authorization, content-type, if-match, x-board-revision, x-mikrocanvas-delete-token",
+  );
   response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+}
+
+function getHeader(request: IncomingMessage, name: string): string {
+  const value = request.headers[name.toLowerCase()];
+  if (Array.isArray(value)) {
+    return value[0] ?? "";
+  }
+
+  return value ?? "";
+}
+
+function isAdminRequest(request: IncomingMessage, adminToken: string): boolean {
+  if (!adminToken) {
+    return false;
+  }
+
+  const authorization = getHeader(request, "authorization");
+  return secureEqual(authorization, `Bearer ${adminToken}`);
+}
+
+function createCapabilityToken(): string {
+  return randomBytes(32).toString("base64url");
+}
+
+function hashOptionalCapabilityToken(token: string): string | null {
+  const normalized = token.trim();
+  return normalized ? hashCapabilityToken(normalized) : null;
+}
+
+function hashCapabilityToken(token: string): string {
+  return createHash("sha256").update(token, "utf8").digest("hex");
+}
+
+function secureEqual(left: string, right: string): boolean {
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
 }
 
 function serveStatic(root: string, requestPath: string, response: ServerResponse): boolean {
@@ -309,10 +394,8 @@ function serveStatic(root: string, requestPath: string, response: ServerResponse
   return true;
 }
 
-function staticCacheControl(filePath: string): string {
-  return filePath.endsWith(".js") || filePath.endsWith(".css") || filePath.endsWith(".png")
-    ? "public, max-age=3600"
-    : "no-store";
+function staticCacheControl(_filePath: string): string {
+  return "no-store";
 }
 
 function getUrlOrigin(value: string): string {

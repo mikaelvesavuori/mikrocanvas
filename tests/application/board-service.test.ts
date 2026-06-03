@@ -5,6 +5,7 @@ import { clone } from "../../src/shared/index.js";
 
 class MemoryBoardRepository implements BoardRepository {
   private boards = new Map<string, DiagramBoard>();
+  failDelete = false;
 
   async list(): Promise<DiagramBoardSummary[]> {
     return [...this.boards.values()]
@@ -22,6 +23,10 @@ class MemoryBoardRepository implements BoardRepository {
   }
 
   async delete(id: string): Promise<void> {
+    if (this.failDelete) {
+      throw new Error("Delete denied.");
+    }
+
     this.boards.delete(id);
   }
 
@@ -166,6 +171,27 @@ describe("BoardService", () => {
     expect(state.activeBoard?.elements.map(boardText)).toEqual(
       expect.arrayContaining(starterTexts),
     );
+  });
+
+  it("keeps the current board and reports an error when deleting is denied", async () => {
+    const repository = new MemoryBoardRepository();
+    const service = new BoardService(repository);
+    await service.boot();
+    const initialId = service.getState().activeBoard?.id;
+    expect(initialId).toBeTruthy();
+    if (!initialId) {
+      return;
+    }
+
+    repository.failDelete = true;
+    await service.deleteBoard(initialId);
+    const state = service.getState();
+
+    expect(state.activeBoard?.id).toBe(initialId);
+    expect(state.persistence).toMatchObject({
+      status: "error",
+      message: "This browser cannot delete that online board.",
+    });
   });
 
   it("exports and imports board files as new local boards", async () => {

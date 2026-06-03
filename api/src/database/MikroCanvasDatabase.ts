@@ -12,6 +12,7 @@ export interface BoardSnapshot {
 
 interface BoardRow {
   created_at: string;
+  delete_token_hash: string | null;
   id: string;
   json: string;
   revision: number;
@@ -44,36 +45,49 @@ export class MikroCanvasDatabase {
         json TEXT NOT NULL,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
-        revision INTEGER NOT NULL DEFAULT 0
+        revision INTEGER NOT NULL DEFAULT 0,
+        delete_token_hash TEXT
       );
 
       CREATE INDEX IF NOT EXISTS idx_boards_updated_at ON boards(updated_at);
     `);
+
+    const columns = this.database.prepare("PRAGMA table_info(boards)").all() as {
+      name: string;
+    }[];
+
+    if (!columns.some((column) => column.name === "delete_token_hash")) {
+      this.database.exec("ALTER TABLE boards ADD COLUMN delete_token_hash TEXT;");
+    }
   }
 
   getBoard(id: string): BoardSnapshot | null {
     const row = this.database
-      .prepare("SELECT id, title, json, created_at, updated_at, revision FROM boards WHERE id = ?")
+      .prepare(
+        "SELECT id, title, json, created_at, updated_at, revision, delete_token_hash FROM boards WHERE id = ?",
+      )
       .get(id) as BoardRow | undefined;
 
     return row ? rowToSnapshot(row, this.commandService) : null;
   }
 
-  saveBoard(board: DiagramBoard): BoardSnapshot {
+  saveBoard(board: DiagramBoard, options: { deleteTokenHash?: string | null } = {}): BoardSnapshot {
     const normalized = this.commandService.normalizeBoard(board);
-    const current = this.getRevision(normalized.id);
-    const revision = (current ?? 0) + 1;
+    const current = this.getBoardRow(normalized.id);
+    const revision = (current?.revision ?? 0) + 1;
+    const deleteTokenHash = current ? current.delete_token_hash : (options.deleteTokenHash ?? null);
 
     this.database
       .prepare(
         `
-          INSERT INTO boards (id, title, json, created_at, updated_at, revision)
-          VALUES (?, ?, ?, ?, ?, ?)
+          INSERT INTO boards (id, title, json, created_at, updated_at, revision, delete_token_hash)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
             title = excluded.title,
             json = excluded.json,
             updated_at = excluded.updated_at,
-            revision = excluded.revision
+            revision = excluded.revision,
+            delete_token_hash = boards.delete_token_hash
         `,
       )
       .run(
@@ -83,6 +97,7 @@ export class MikroCanvasDatabase {
         normalized.createdAt,
         normalized.updatedAt,
         revision,
+        deleteTokenHash,
       );
 
     return {
@@ -101,12 +116,14 @@ export class MikroCanvasDatabase {
     this.database.close();
   }
 
-  private getRevision(id: string): number | null {
-    const row = this.database.prepare("SELECT revision FROM boards WHERE id = ?").get(id) as
-      | Pick<BoardRow, "revision">
-      | undefined;
+  getDeleteTokenHash(id: string): string | null {
+    return this.getBoardRow(id)?.delete_token_hash ?? null;
+  }
 
-    return typeof row?.revision === "number" ? row.revision : null;
+  private getBoardRow(id: string): Pick<BoardRow, "delete_token_hash" | "revision"> | undefined {
+    return this.database
+      .prepare("SELECT revision, delete_token_hash FROM boards WHERE id = ?")
+      .get(id) as Pick<BoardRow, "delete_token_hash" | "revision"> | undefined;
   }
 }
 

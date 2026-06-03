@@ -134,10 +134,17 @@ export type DiagramBoardSummary = {
   updatedAt: string;
 };
 
+export type DiagramPersistenceState = {
+  status: "error" | "idle" | "saved" | "saving";
+  message?: string;
+  updatedAt?: string;
+};
+
 export type DiagramAppState = {
   boards: DiagramBoardSummary[];
   activeBoard: DiagramBoard | null;
   storageAvailable: boolean;
+  persistence: DiagramPersistenceState;
   canUndo: boolean;
   canRedo: boolean;
 };

@@ -5,7 +5,9 @@ description: How MikroCanvas stores local boards.
 
 MikroCanvas stores boards in browser IndexedDB when it runs in local mode. Data stays in the current browser profile unless you export it or the browser profile syncs storage through its own features.
 
-When online boards are enabled, boards are saved in the MikroCanvas API SQLite database instead. The browser keeps only a small local list of board IDs it has opened so the board library can show recently used online boards without exposing a public board directory.
+When online boards are enabled, boards are saved in the MikroCanvas API SQLite database instead. The browser keeps a small local list of board IDs it has opened so the board library can show recently used online boards without exposing a public board directory.
+
+For online boards created in the current browser, MikroCanvas also stores a local delete token. That token is not part of copied board links, so clearing browser storage may remove the browser's ability to delete that board unless an admin token is configured on the server.
 
 ## Storage availability
 

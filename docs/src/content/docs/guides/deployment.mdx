@@ -28,6 +28,8 @@ Run the bundled API server when boards should be saved online and opened by ID:
 npm start
 ```
 
-The server stores boards in SQLite and serves `config.json` with API mode enabled. A board URL includes `?board=<board-id>`, and anyone with that ID can open, update, or delete the board.
+The server stores boards in SQLite and serves `config.json` with API mode enabled. A board URL includes `?board=<board-id>`, and anyone with that ID can open and update the board.
 
-Use `mikrocanvas.config.json`, environment variables, or CLI flags to set the host, port, app URL, and database path. See `mikrocanvas.config.json.example` for the file shape.
+Deleting requires the local delete token held by the creating browser, or an optional configured admin token.
+
+Use `mikrocanvas.config.json`, environment variables, or CLI flags to set the host, port, app URL, database path, and optional admin token. See `mikrocanvas.config.json.example` for the file shape.

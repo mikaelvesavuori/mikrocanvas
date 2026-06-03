@@ -13,10 +13,12 @@ describe("AppServer", () => {
   beforeEach(async () => {
     staticRoot = mkdtempSync(join(tmpdir(), "mikrocanvas-static-"));
     writeFileSync(join(staticRoot, "index.html"), "<!doctype html><title>MikroCanvas</title>");
+    writeFileSync(join(staticRoot, "main.js"), "console.log('mikrocanvas');");
     database = new MikroCanvasDatabase(":memory:");
     database.migrate();
     server = new AppServer({
       config: {
+        adminToken: "test-admin-token-with-enough-length",
         appUrl: "http://127.0.0.1:0",
         databasePath: ":memory:",
         host: "127.0.0.1",
@@ -50,13 +52,16 @@ describe("AppServer", () => {
     });
   });
 
-  it("opens, saves, and deletes boards by ID without exposing a board directory", async () => {
+  it("opens and saves boards by ID without exposing a board directory", async () => {
     const board = Board.create("Shared sketch", "2026-01-01T00:00:00.000Z");
     const boardUrl = `${server.getBaseUrl()}/api/boards/${encodeURIComponent(board.id)}`;
 
     const saveResponse = await fetch(boardUrl, {
       body: JSON.stringify(board),
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-MikroCanvas-Delete-Token": "creator-delete-token",
+      },
       method: "PUT",
     });
     expect(saveResponse.status).toBe(200);
@@ -70,8 +75,59 @@ describe("AppServer", () => {
     });
 
     expect((await fetch(`${server.getBaseUrl()}/api/boards`)).status).toBe(404);
+  });
 
-    const deleteResponse = await fetch(boardUrl, { method: "DELETE" });
+  it("requires creator delete token or admin token to delete boards", async () => {
+    const board = Board.create("Delete guarded", "2026-01-01T00:00:00.000Z");
+    const boardUrl = `${server.getBaseUrl()}/api/boards/${encodeURIComponent(board.id)}`;
+    await fetch(boardUrl, {
+      body: JSON.stringify(board),
+      headers: {
+        "Content-Type": "application/json",
+        "X-MikroCanvas-Delete-Token": "creator-delete-token",
+      },
+      method: "PUT",
+    });
+
+    expect((await fetch(boardUrl, { method: "DELETE" })).status).toBe(403);
+    expect(
+      (
+        await fetch(boardUrl, {
+          headers: {
+            "X-MikroCanvas-Delete-Token": "wrong-token",
+          },
+          method: "DELETE",
+        })
+      ).status,
+    ).toBe(403);
+    expect((await fetch(boardUrl)).status).toBe(200);
+
+    const deleteResponse = await fetch(boardUrl, {
+      headers: {
+        "X-MikroCanvas-Delete-Token": "creator-delete-token",
+      },
+      method: "DELETE",
+    });
+    expect(deleteResponse.status).toBe(204);
+    expect((await fetch(boardUrl)).status).toBe(404);
+  });
+
+  it("allows admin token deletion for recovery", async () => {
+    const board = Board.create("Admin delete", "2026-01-01T00:00:00.000Z");
+    const boardUrl = `${server.getBaseUrl()}/api/boards/${encodeURIComponent(board.id)}`;
+    await fetch(boardUrl, {
+      body: JSON.stringify(board),
+      headers: { "Content-Type": "application/json" },
+      method: "PUT",
+    });
+
+    const deleteResponse = await fetch(boardUrl, {
+      headers: {
+        Authorization: "Bearer test-admin-token-with-enough-length",
+      },
+      method: "DELETE",
+    });
+
     expect(deleteResponse.status).toBe(204);
     expect((await fetch(boardUrl)).status).toBe(404);
   });
@@ -81,5 +137,12 @@ describe("AppServer", () => {
 
     expect(response.status).toBe(200);
     expect(await response.text()).toContain("MikroCanvas");
+  });
+
+  it("serves static app assets without browser cache stickiness", async () => {
+    const response = await fetch(`${server.getBaseUrl()}/main.js`);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("no-store");
   });
 });

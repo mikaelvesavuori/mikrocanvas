@@ -34,7 +34,9 @@ describe("launch readiness assets", () => {
     });
     expect(app).toContain("copyOnlineBoardLink");
     expect(app).toContain("getInitialOnlineBoardId");
+    expect(app).toContain("renderPersistenceStatus");
     expect(server).toContain("/api/boards");
+    expect(server).toContain("x-mikrocanvas-delete-token");
     expect(server).toContain("createPublicRuntimeConfig");
   });
 
@@ -47,6 +49,7 @@ describe("launch readiness assets", () => {
 
     for (const id of [
       "board-title-input",
+      "persistence-status",
       "new-board-btn",
       "library-btn",
       "import-btn",
@@ -143,6 +146,7 @@ describe("launch readiness assets", () => {
     expect(css).toContain("height: 100dvh");
     expect(css).toContain('.canvas-stage[data-grid="hidden"]');
     expect(css).toContain(".action-cluster");
+    expect(css).toContain(".persistence-status");
     expect(css).toContain("overflow-x: auto");
     expect(css).toContain("scrollbar-width: none");
     expect(css).toContain("#import-btn,\n  #export-json-btn");

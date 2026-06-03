@@ -23,11 +23,15 @@ The static app reads `config.json` at startup:
 
 When the API server hosts the app it serves a runtime config with `mode: "api"`, `onlineBoards.enabled: true`, and `apiBaseUrl` pointing to the server.
 
+In API mode, the top bar shows online save status. A failed save also raises a toast so the user knows to retry or export JSON before leaving.
+
 ## Online Boards
 
-API-backed boards are open if you have the board ID. A URL containing `?board=<board-id>` can load that board from the API, and the command palette can copy the active online board link.
+API-backed boards are open if you have the board ID. A URL containing `?board=<board-id>` can load and edit that board from the API, and the command palette can copy the active online board link.
 
-There is no MikroAuth requirement for this mode. Treat board IDs and copied links as sensitive.
+Deleting is a separate capability. The creating browser keeps a local delete token that is not added to shared links. Operators can configure an optional admin token for recovery deletes.
+
+There is no MikroAuth requirement for this mode. Treat board IDs and copied links as edit-capable links.
 
 ## Deployment Settings
 
@@ -37,9 +41,12 @@ The API server can be configured with `mikrocanvas.config.json`, environment var
 
 ```json
 {
+  "adminToken": "",
   "appUrl": "http://127.0.0.1:3000",
   "databasePath": "data/mikrocanvas.sqlite",
   "host": "127.0.0.1",
   "port": 3000
 }
 ```
+
+Equivalent environment variables include `MIKROCANVAS_APP_URL`, `MIKROCANVAS_DB_PATH`, `MIKROCANVAS_HOST`, `MIKROCANVAS_PORT`, and `MIKROCANVAS_ADMIN_TOKEN`. The matching CLI flags are `--app-url`, `--database-path`, `--host`, `--port`, and `--admin-token`.

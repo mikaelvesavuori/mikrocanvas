@@ -5,26 +5,33 @@ import { clone } from "../../shared/index.js";
 
 const knownBoardsKey = "mikrocanvas_online_board_ids";
 
-export interface BoardIdStorage {
-  read(): string[];
-  write(ids: string[]): void;
+export interface BoardAccessRecord {
+  deleteToken?: string;
+  id: string;
+}
+
+export interface BoardAccessStorage {
+  get(id: string): BoardAccessRecord | null;
+  list(): BoardAccessRecord[];
+  remember(record: BoardAccessRecord): void;
+  forget(id: string): void;
 }
 
 export class HttpBoardRepository implements BoardRepository {
-  private readonly boardIds: BoardIdStorage;
+  private readonly boardAccess: BoardAccessStorage;
 
   constructor(
     private readonly apiBaseUrl: string,
-    boardIds: BoardIdStorage = createBoardIdStorage(),
+    boardAccess: BoardAccessStorage = createBoardAccessStorage(),
   ) {
-    this.boardIds = boardIds;
+    this.boardAccess = boardAccess;
   }
 
   async list(): Promise<DiagramBoardSummary[]> {
     const boards: DiagramBoard[] = [];
     const missingIds: string[] = [];
 
-    for (const id of this.boardIds.read()) {
+    for (const { id } of this.boardAccess.list()) {
       const board = await this.get(id, { remember: false });
       if (board) {
         boards.push(board);
@@ -57,17 +64,20 @@ export class HttpBoardRepository implements BoardRepository {
 
     const board = (await response.json()) as DiagramBoard;
     if (options.remember !== false) {
-      this.remember(board.id);
+      this.remember({ id: board.id });
     }
     return clone(board);
   }
 
   async save(board: DiagramBoard): Promise<void> {
+    const access = this.boardAccess.get(board.id);
+    const deleteToken = access?.deleteToken ?? (access ? undefined : createDeleteToken());
     const response = await fetch(this.url(`/api/boards/${encodeURIComponent(board.id)}`), {
       body: JSON.stringify(board),
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",
+        ...(deleteToken ? { "X-MikroCanvas-Delete-Token": deleteToken } : {}),
       },
       method: "PUT",
     });
@@ -76,12 +86,19 @@ export class HttpBoardRepository implements BoardRepository {
       throw new Error(`Failed to save board ${board.id}.`);
     }
 
-    this.remember(board.id);
+    this.remember({
+      id: board.id,
+      deleteToken,
+    });
   }
 
   async delete(id: string): Promise<void> {
+    const deleteToken = this.boardAccess.get(id)?.deleteToken;
     const response = await fetch(this.url(`/api/boards/${encodeURIComponent(id)}`), {
       cache: "no-store",
+      headers: {
+        ...(deleteToken ? { "X-MikroCanvas-Delete-Token": deleteToken } : {}),
+      },
       method: "DELETE",
     });
 
@@ -89,74 +106,168 @@ export class HttpBoardRepository implements BoardRepository {
       throw new Error(`Failed to delete board ${id}.`);
     }
 
-    this.forget(id);
+    this.boardAccess.forget(id);
   }
 
   private url(pathname: string): string {
     return new URL(pathname.replace(/^\//, ""), withTrailingSlash(this.apiBaseUrl)).toString();
   }
 
-  private remember(id: string): void {
-    const ids = this.boardIds.read().filter((entry) => entry !== id);
-    this.boardIds.write([id, ...ids]);
-  }
-
-  private forget(id: string): void {
-    this.boardIds.write(this.boardIds.read().filter((entry) => entry !== id));
+  private remember(record: BoardAccessRecord): void {
+    this.boardAccess.remember(record);
   }
 
   private forgetMany(ids: string[]): void {
     const missing = new Set(ids);
-    this.boardIds.write(this.boardIds.read().filter((entry) => !missing.has(entry)));
+    for (const id of missing) {
+      this.boardAccess.forget(id);
+    }
   }
 }
 
-export function createBoardIdStorage(): BoardIdStorage {
-  const fallback: string[] = [];
+export function createBoardAccessStorage(): BoardAccessStorage {
+  const fallback: BoardAccessRecord[] = [];
 
   if (typeof localStorage === "undefined") {
-    return memoryBoardIdStorage(fallback);
+    return memoryBoardAccessStorage(fallback);
   }
 
   try {
     localStorage.getItem(knownBoardsKey);
-    return {
-      read: () => parseBoardIds(localStorage.getItem(knownBoardsKey)),
-      write: (ids) => {
-        localStorage.setItem(knownBoardsKey, JSON.stringify(uniqueIds(ids)));
-      },
-    };
+    return persistentBoardAccessStorage();
   } catch {
-    return memoryBoardIdStorage(fallback);
+    return memoryBoardAccessStorage(fallback);
   }
 }
 
-function memoryBoardIdStorage(ids: string[]): BoardIdStorage {
+function persistentBoardAccessStorage(): BoardAccessStorage {
   return {
-    read: () => [...ids],
-    write: (nextIds) => {
-      ids.splice(0, ids.length, ...uniqueIds(nextIds));
+    get: (id) =>
+      parseBoardAccessRecords(localStorage.getItem(knownBoardsKey)).find(
+        (record) => record.id === id,
+      ) ?? null,
+    list: () => parseBoardAccessRecords(localStorage.getItem(knownBoardsKey)),
+    remember: (record) => {
+      localStorage.setItem(
+        knownBoardsKey,
+        JSON.stringify(
+          rememberRecord(parseBoardAccessRecords(localStorage.getItem(knownBoardsKey)), record),
+        ),
+      );
+    },
+    forget: (id) => {
+      localStorage.setItem(
+        knownBoardsKey,
+        JSON.stringify(
+          parseBoardAccessRecords(localStorage.getItem(knownBoardsKey)).filter(
+            (record) => record.id !== id,
+          ),
+        ),
+      );
     },
   };
 }
 
-function parseBoardIds(value: string | null): string[] {
+function memoryBoardAccessStorage(records: BoardAccessRecord[]): BoardAccessStorage {
+  return {
+    get: (id) => records.find((record) => record.id === id) ?? null,
+    list: () => records.map((record) => ({ ...record })),
+    remember: (record) => {
+      records.splice(0, records.length, ...rememberRecord(records, record));
+    },
+    forget: (id) => {
+      records.splice(0, records.length, ...records.filter((record) => record.id !== id));
+    },
+  };
+}
+
+function parseBoardAccessRecords(value: string | null): BoardAccessRecord[] {
   if (!value) {
     return [];
   }
 
   try {
     const parsed = JSON.parse(value);
-    return Array.isArray(parsed)
-      ? uniqueIds(parsed.filter((entry) => typeof entry === "string"))
-      : [];
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return uniqueRecords(
+      parsed
+        .map((entry) => {
+          if (typeof entry === "string") {
+            return { id: entry };
+          }
+
+          if (!entry || typeof entry !== "object") {
+            return null;
+          }
+
+          const record = entry as Partial<BoardAccessRecord>;
+          return typeof record.id === "string"
+            ? {
+                id: record.id,
+                deleteToken:
+                  typeof record.deleteToken === "string" ? record.deleteToken : undefined,
+              }
+            : null;
+        })
+        .filter((entry): entry is BoardAccessRecord => Boolean(entry)),
+    );
   } catch {
     return [];
   }
 }
 
-function uniqueIds(ids: string[]): string[] {
-  return [...new Set(ids.map((id) => id.trim()).filter(Boolean))];
+function rememberRecord(
+  records: BoardAccessRecord[],
+  record: BoardAccessRecord,
+): BoardAccessRecord[] {
+  const clean = cleanRecord(record);
+  if (!clean) {
+    return uniqueRecords(records);
+  }
+
+  const existing = records.find((entry) => entry.id === clean.id);
+  return uniqueRecords([
+    {
+      ...existing,
+      ...clean,
+      deleteToken: clean.deleteToken ?? existing?.deleteToken,
+    },
+    ...records.filter((entry) => entry.id !== clean.id),
+  ]);
+}
+
+function uniqueRecords(records: BoardAccessRecord[]): BoardAccessRecord[] {
+  const unique = new Map<string, BoardAccessRecord>();
+
+  for (const record of records) {
+    const clean = cleanRecord(record);
+    if (clean && !unique.has(clean.id)) {
+      unique.set(clean.id, clean);
+    }
+  }
+
+  return [...unique.values()];
+}
+
+function cleanRecord(record: BoardAccessRecord): BoardAccessRecord | null {
+  const id = record.id.trim();
+  if (!id) {
+    return null;
+  }
+
+  return {
+    id,
+    ...(record.deleteToken?.trim() ? { deleteToken: record.deleteToken.trim() } : {}),
+  };
+}
+
+function createDeleteToken(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 function withTrailingSlash(value: string): string {

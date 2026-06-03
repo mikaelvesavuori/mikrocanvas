@@ -55,6 +55,7 @@ let appState: DiagramAppState = {
   boards: [],
   activeBoard: null,
   storageAvailable: true,
+  persistence: { status: "idle" },
   canUndo: false,
   canRedo: false,
 };
@@ -64,6 +65,7 @@ let activeArrowRoute: ArrowRoute = "straight";
 let selectedIds = new Set<string>();
 let selectedTextTargetId: string | null = null;
 let runtimeConfig = createDefaultRuntimeConfig();
+let lastPersistenceError = "";
 let toastTimer = 0;
 let spacePressed = false;
 const inlineEditor = new InlineEditorController({
@@ -286,6 +288,7 @@ function buildCommandActions() {
 function render() {
   const board = appState.activeBoard;
   syncOnlineBoardUrl(board);
+  renderPersistenceStatus();
   elements.undoButton.disabled = !appState.canUndo;
   elements.redoButton.disabled = !appState.canRedo;
   elements.canvasStage.dataset.tool = spacePressed ? "hand" : activeTool;
@@ -731,6 +734,46 @@ function showToast(message: string) {
   toastTimer = window.setTimeout(() => {
     elements.toast.classList.remove("is-visible");
   }, 2200);
+}
+
+function renderPersistenceStatus() {
+  if (!onlineBoardsEnabled()) {
+    elements.persistenceStatus.hidden = true;
+    lastPersistenceError = "";
+    return;
+  }
+
+  const status = appState.persistence.status;
+  elements.persistenceStatus.hidden = false;
+  elements.persistenceStatus.dataset.status = status;
+  elements.persistenceStatus.textContent = persistenceLabel(status);
+  elements.persistenceStatus.title =
+    appState.persistence.message ?? elements.persistenceStatus.textContent;
+
+  if (status === "error" && appState.persistence.message !== lastPersistenceError) {
+    lastPersistenceError = appState.persistence.message ?? "Online save failed.";
+    showToast(lastPersistenceError);
+  }
+
+  if (status !== "error") {
+    lastPersistenceError = "";
+  }
+}
+
+function persistenceLabel(status: DiagramAppState["persistence"]["status"]): string {
+  if (status === "saving") {
+    return "Saving";
+  }
+
+  if (status === "saved") {
+    return "Saved";
+  }
+
+  if (status === "error") {
+    return "Save failed";
+  }
+
+  return "Online";
 }
 
 async function copyOnlineBoardLink() {

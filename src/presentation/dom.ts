@@ -15,6 +15,7 @@ export const elements = {
   overlayLayer: queryElement<SVGGElement>("#overlay-layer"),
   inlineEditor: queryElement<HTMLTextAreaElement>("#inline-editor"),
   boardTitleInput: queryElement<HTMLInputElement>("#board-title-input"),
+  persistenceStatus: queryElement<HTMLElement>("#persistence-status"),
   newBoardButton: queryElement<HTMLButtonElement>("#new-board-btn"),
   libraryButton: queryElement<HTMLButtonElement>("#library-btn"),
   undoButton: queryElement<HTMLButtonElement>("#undo-btn"),

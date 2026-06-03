@@ -4,6 +4,7 @@ const defaultConfigPath = "mikrocanvas.config.json";
 const defaultDatabasePath = "data/mikrocanvas.sqlite";
 
 export interface MikroCanvasConfig {
+  adminToken: string;
   appUrl: string;
   databasePath: string;
   host: string;
@@ -31,6 +32,10 @@ export function validateConfig(config: MikroCanvasConfig): ConfigValidationResul
   requireText(errors, "databasePath", config.databasePath);
   requireText(errors, "host", config.host);
 
+  if (config.adminToken && config.adminToken.length < 24) {
+    errors.push("adminToken must contain at least 24 characters when set.");
+  }
+
   if (config.appUrl && !isValidUrl(config.appUrl)) {
     errors.push("appUrl must be a valid URL.");
   }
@@ -47,6 +52,7 @@ export function validateConfig(config: MikroCanvasConfig): ConfigValidationResul
 
 function defaultConfig(): MikroCanvasConfig {
   return {
+    adminToken: "",
     appUrl: "http://127.0.0.1:3000",
     databasePath: defaultDatabasePath,
     host: "127.0.0.1",
@@ -68,6 +74,7 @@ function readConfigFile(path: string): Partial<MikroCanvasConfig> {
 
 function readEnvOverrides(): Partial<MikroCanvasConfig> {
   return compact({
+    adminToken: readEnv(["MIKROCANVAS_ADMIN_TOKEN", "ADMIN_TOKEN"]),
     appUrl: readEnv(["MIKROCANVAS_APP_URL", "APP_URL"]),
     databasePath: readEnv(["MIKROCANVAS_DB_PATH", "DATABASE_PATH"]),
     host: readEnv(["MIKROCANVAS_HOST", "HOST"]),
@@ -77,6 +84,7 @@ function readEnvOverrides(): Partial<MikroCanvasConfig> {
 
 function readArgumentOverrides(args: string[]): Partial<MikroCanvasConfig> {
   return compact({
+    adminToken: readArgument(args, ["--admin-token", "--adminToken"]),
     appUrl: readArgument(args, ["--app-url", "--appUrl"]),
     databasePath: readArgument(args, ["--database-path", "--databasePath"]),
     host: readArgument(args, ["--host"]),
@@ -88,6 +96,7 @@ function normalizeConfig(config: Partial<MikroCanvasConfig>): MikroCanvasConfig 
   const defaults = defaultConfig();
 
   return {
+    adminToken: typeof config.adminToken === "string" ? config.adminToken.trim() : "",
     appUrl: textOrDefault(config.appUrl, defaults.appUrl),
     databasePath: textOrDefault(config.databasePath, defaults.databasePath),
     host: textOrDefault(config.host, defaults.host),

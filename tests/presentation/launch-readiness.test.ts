@@ -10,7 +10,7 @@ describe("launch readiness assets", () => {
       version?: string;
     };
 
-    expect(packageJson.version).toBe("1.0.1");
+    expect(packageJson.version).toBe("1.0.2");
     expect(packageJson.repository).toBeTruthy();
     expect(packageJson.bugs).toBeTruthy();
     expect(packageJson.homepage).toContain("mikrocanvas");
@@ -20,20 +20,20 @@ describe("launch readiness assets", () => {
     expect(packageJson.scripts?.["build:api"]).toContain("--target api");
   });
 
-  it("declares local runtime defaults and the optional online-board API", () => {
+  it("declares local runtime defaults and the optional snapshot API", () => {
     const runtimeConfig = JSON.parse(readFileSync("src/public/config.json", "utf8")) as {
+      boardSnapshots?: { enabled?: boolean };
       mode?: string;
-      onlineBoards?: { enabled?: boolean };
     };
     const app = readFileSync("src/presentation/app.ts", "utf8");
     const server = readFileSync("api/src/http/AppServer.ts", "utf8");
 
     expect(runtimeConfig).toMatchObject({
+      boardSnapshots: { enabled: false },
       mode: "local",
-      onlineBoards: { enabled: false },
     });
-    expect(app).toContain("copyOnlineBoardLink");
-    expect(app).toContain("getInitialOnlineBoardId");
+    expect(app).toContain("publishBoardSnapshot");
+    expect(app).toContain("getInitialSharedBoardId");
     expect(app).toContain("renderPersistenceStatus");
     expect(server).toContain("/api/boards");
     expect(server).toContain("x-mikrocanvas-delete-token");
@@ -50,6 +50,7 @@ describe("launch readiness assets", () => {
     for (const id of [
       "board-title-input",
       "persistence-status",
+      "share-board-btn",
       "new-board-btn",
       "library-btn",
       "import-btn",
@@ -72,6 +73,7 @@ describe("launch readiness assets", () => {
     expect(app).toContain("openCommandPalette");
     expect(html).toContain('aria-label="History and zoom controls"');
     expect(html).toContain('aria-label="Command palette"');
+    expect(html).toContain('aria-label="Publish snapshot link"');
     expect(html).toContain("viewport-fit=cover");
     expect(html).toContain('aria-pressed="true"');
     expect(html).toContain("#icon-grid");

@@ -1,7 +1,7 @@
 {
   "mode": "local",
   "apiBaseUrl": ".",
-  "onlineBoards": {
+  "boardSnapshots": {
     "enabled": false
   }
 }

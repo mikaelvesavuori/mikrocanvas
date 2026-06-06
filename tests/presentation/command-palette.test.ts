@@ -115,17 +115,20 @@ describe("command palette", () => {
     );
   });
 
-  it("exposes online board links only when API boards are enabled", () => {
+  it("exposes snapshot publishing only when API boards are enabled", () => {
     const localCommands = buildCanvasCommands(commandOptions());
-    const onlineCommands = buildCanvasCommands(
+    const snapshotCommands = buildCanvasCommands(
       commandOptions({
-        onlineBoardId: "board_shared",
-        onlineBoardsEnabled: true,
+        activeBoardId: "board_shared",
+        snapshotSharingEnabled: true,
       }),
     );
 
-    expect(localCommands.map((command) => command.id)).not.toContain("copy-online-link");
-    expect(onlineCommands.map((command) => command.id)).toContain("copy-online-link");
+    expect(localCommands.map((command) => command.id)).not.toContain("publish-snapshot-link");
+    expect(snapshotCommands.map((command) => command.id)).toContain("publish-snapshot-link");
+    expect(snapshotCommands.find((command) => command.id === "publish-snapshot-link")?.title).toBe(
+      "Publish snapshot link",
+    );
   });
 
   it("only exposes selection commands when a selection exists", () => {
@@ -185,8 +188,8 @@ function commandOptions(
     canUndo: false,
     gridVisible: true,
     hasSelection: false,
-    onlineBoardId: undefined,
-    onlineBoardsEnabled: false,
+    activeBoardId: undefined,
+    snapshotSharingEnabled: false,
     selectionLocked: false,
     actions: {
       bringToFront: noop,
@@ -204,7 +207,7 @@ function commandOptions(
       openBoards: noop,
       pasteSelection: noop,
       redo: noop,
-      copyOnlineBoardLink: noop,
+      publishBoardSnapshot: noop,
       selectAll: noop,
       sendToBack: noop,
       setTool: (_tool: DiagramTool) => undefined,

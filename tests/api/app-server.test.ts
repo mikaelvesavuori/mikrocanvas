@@ -43,8 +43,8 @@ describe("AppServer", () => {
     expect(configResponse.status).toBe(200);
     expect(await configResponse.json()).toMatchObject({
       apiBaseUrl: server.getBaseUrl(),
+      boardSnapshots: { enabled: true },
       mode: "api",
-      onlineBoards: { enabled: true },
     });
     expect(await healthResponse.json()).toMatchObject({
       service: "mikrocanvas-api",
@@ -52,7 +52,7 @@ describe("AppServer", () => {
     });
   });
 
-  it("opens and saves boards by ID without exposing a board directory", async () => {
+  it("publishes and loads board snapshots by ID without exposing a board directory", async () => {
     const board = Board.create("Shared sketch", "2026-01-01T00:00:00.000Z");
     const boardUrl = `${server.getBaseUrl()}/api/boards/${encodeURIComponent(board.id)}`;
 

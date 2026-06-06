@@ -133,7 +133,7 @@ export class AppServer {
       (url.pathname === "/api/health" || url.pathname === "/health")
     ) {
       sendJson(response, 200, {
-        onlineBoards: true,
+        boardSnapshots: true,
         service: "mikrocanvas-api",
         status: "healthy",
         timestamp: new Date().toISOString(),
@@ -432,10 +432,10 @@ function contentType(filePath: string): string {
 function createPublicRuntimeConfig(apiBaseUrl: string) {
   return {
     apiBaseUrl,
-    mode: "api",
-    onlineBoards: {
+    boardSnapshots: {
       enabled: true,
     },
+    mode: "api",
   };
 }
 
@@ -454,18 +454,18 @@ function createOpenApiSchema(baseUrl: string) {
       },
       "/api/boards": {
         post: {
-          summary: "Create an empty board",
+          summary: "Create an empty board snapshot",
         },
       },
       "/api/boards/{boardId}": {
         delete: {
-          summary: "Delete an open board by ID",
+          summary: "Delete a board snapshot by ID",
         },
         get: {
-          summary: "Load an open board by ID",
+          summary: "Load a board snapshot by ID",
         },
         put: {
-          summary: "Save an open board by ID",
+          summary: "Publish a board snapshot by ID",
         },
       },
       "/api/health": {

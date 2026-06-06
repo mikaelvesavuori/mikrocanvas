@@ -1,4 +1,8 @@
-import { BoardService, type BoardRepository } from "../application/index.js";
+import {
+  type BoardRepository,
+  BoardService,
+  type BoardSnapshotRepository,
+} from "../application/index.js";
 import { createDefaultRuntimeConfig, type RuntimeConfig } from "../config/index.js";
 import { DiagramCommandService } from "../domain/index.js";
 import { IndexedDbBoardRepository, RuntimeBoardRepository } from "../infrastructure/index.js";
@@ -32,6 +36,7 @@ import { hasText } from "./format.js";
 import { InlineEditorController } from "./inlineEditorController.js";
 import { renderInspector } from "./inspectorView.js";
 import { createKeyboardHandler, createKeyboardKeyupHandler } from "./keyboardController.js";
+import { boardIdToShareId, shareIdToBoardId } from "./boardShareLinks.js";
 import {
   isElementLocked,
   mutableSelectedElements,
@@ -65,6 +70,7 @@ let activeArrowRoute: ArrowRoute = "straight";
 let selectedIds = new Set<string>();
 let selectedTextTargetId: string | null = null;
 let runtimeConfig = createDefaultRuntimeConfig();
+let boardSnapshotRepository: BoardSnapshotRepository | null = null;
 let lastPersistenceError = "";
 let toastTimer = 0;
 let spacePressed = false;
@@ -149,8 +155,8 @@ const handleKeyboardKeyup = createKeyboardKeyupHandler({
 });
 const handleBoardListClick = createBoardListClickHandler({
   clearSelection,
-  loadBoard: (id) => boardService.loadBoard(id),
-  duplicateBoard: (id) => boardService.duplicateBoard(id),
+  loadBoard: loadLocalBoard,
+  duplicateBoard: duplicateLocalBoard,
   deleteBoard: deleteBoardFromLibrary,
   confirmDeleteBoard,
   closeLibrary: () => elements.libraryDialog.close(),
@@ -170,9 +176,14 @@ export class MikroCanvasApp {
   }
 }
 
-export function configureRuntime(config: RuntimeConfig, repository: BoardRepository) {
+export function configureRuntime(
+  config: RuntimeConfig,
+  repository: BoardRepository,
+  snapshotRepository: BoardSnapshotRepository | null = null,
+) {
   runtimeConfig = config;
   runtimeRepository.use(repository);
+  boardSnapshotRepository = snapshotRepository;
 }
 
 async function boot() {
@@ -184,7 +195,8 @@ async function boot() {
     retainSelectedTextTarget();
     render();
   });
-  await boardService.boot({ initialBoardId: getInitialOnlineBoardId() });
+  await boardService.boot();
+  await loadInitialBoardSnapshot();
 }
 
 function bindEvents() {
@@ -196,12 +208,15 @@ function bindEvents() {
     geometryContext,
     getActiveBoard: () => appState.activeBoard,
     clearSelection,
+    clearSharedBoardUrl,
     showToast,
+    createBoard: createNewBoard,
     duplicateSelection,
     deleteSelection,
     reorderSelection,
     editSelectedText,
     toggleGridVisibility,
+    publishBoardSnapshot,
     toggleSelectionLock,
     toggleArrowRoute,
     applyInspectorText,
@@ -217,7 +232,18 @@ function bindEvents() {
 
 async function createNewBoard() {
   await boardService.createBoard("Untitled board");
+  clearSharedBoardUrl();
   viewportController.fitToContent({ allowZoomIn: false });
+}
+
+async function loadLocalBoard(id: string) {
+  await boardService.loadBoard(id);
+  clearSharedBoardUrl();
+}
+
+async function duplicateLocalBoard(id: string) {
+  await boardService.duplicateBoard(id);
+  clearSharedBoardUrl();
 }
 
 function openBoardLibrary() {
@@ -247,8 +273,8 @@ function buildCommandActions() {
     canUndo: appState.canUndo,
     gridVisible: isGridVisible(appState.activeBoard),
     hasSelection: selectedIds.size > 0,
-    onlineBoardId: appState.activeBoard?.id,
-    onlineBoardsEnabled: onlineBoardsEnabled(),
+    activeBoardId: appState.activeBoard?.id,
+    snapshotSharingEnabled: isSnapshotSharingEnabled(),
     selectionLocked: selectedElements.length > 0 && selectedElements.every(isElementLocked),
     actions: {
       bringToFront: () => reorderSelection("front"),
@@ -269,7 +295,7 @@ function buildCommandActions() {
       openBoards: openBoardLibrary,
       pasteSelection,
       redo: () => boardService.redo(),
-      copyOnlineBoardLink,
+      publishBoardSnapshot,
       selectAll: selectAllElements,
       sendToBack: () => reorderSelection("back"),
       setTool,
@@ -287,8 +313,8 @@ function buildCommandActions() {
 
 function render() {
   const board = appState.activeBoard;
-  syncOnlineBoardUrl(board);
   renderPersistenceStatus();
+  renderShareBoardButton(board);
   elements.undoButton.disabled = !appState.canUndo;
   elements.redoButton.disabled = !appState.canRedo;
   elements.canvasStage.dataset.tool = spacePressed ? "hand" : activeTool;
@@ -685,7 +711,12 @@ function confirmDeleteBoard(id: string) {
 
 async function deleteBoardFromLibrary(id: string) {
   const createsReplacement = appState.boards.length <= 1;
+  const deletesActiveBoard = appState.activeBoard?.id === id;
   await boardService.deleteBoard(id);
+
+  if (createsReplacement || deletesActiveBoard) {
+    clearSharedBoardUrl();
+  }
 
   if (createsReplacement) {
     viewportController.fitToContent({ allowZoomIn: false });
@@ -737,7 +768,7 @@ function showToast(message: string) {
 }
 
 function renderPersistenceStatus() {
-  if (!onlineBoardsEnabled()) {
+  if (!isSnapshotSharingEnabled()) {
     elements.persistenceStatus.hidden = true;
     lastPersistenceError = "";
     return;
@@ -751,7 +782,7 @@ function renderPersistenceStatus() {
     appState.persistence.message ?? elements.persistenceStatus.textContent;
 
   if (status === "error" && appState.persistence.message !== lastPersistenceError) {
-    lastPersistenceError = appState.persistence.message ?? "Online save failed.";
+    lastPersistenceError = appState.persistence.message ?? "Local save failed.";
     showToast(lastPersistenceError);
   }
 
@@ -760,65 +791,127 @@ function renderPersistenceStatus() {
   }
 }
 
+function renderShareBoardButton(board: DiagramBoard | null) {
+  elements.shareBoardButton.hidden = !board || !isSnapshotSharingEnabled();
+}
+
 function persistenceLabel(status: DiagramAppState["persistence"]["status"]): string {
   if (status === "saving") {
     return "Saving";
   }
 
   if (status === "saved") {
-    return "Saved";
+    return "Local";
   }
 
   if (status === "error") {
     return "Save failed";
   }
 
-  return "Online";
+  return "Local";
 }
 
-async function copyOnlineBoardLink() {
-  const board = appState.activeBoard;
-  if (!board || !onlineBoardsEnabled()) {
+async function publishBoardSnapshot() {
+  if (!appState.activeBoard || !boardSnapshotRepository) {
     return;
   }
 
-  const url = createOnlineBoardUrl(board.id).toString();
+  const board = await activeBoardReadyForSnapshot();
+  if (!board) {
+    return;
+  }
+
+  const url = createSnapshotShareUrl(board.id).toString();
 
   try {
-    await navigator.clipboard.writeText(url);
-    showToast("Online board link copied");
+    await boardSnapshotRepository.save(board);
   } catch {
-    window.prompt("Board link", url);
-  }
-}
-
-function syncOnlineBoardUrl(board: DiagramBoard | null) {
-  if (!board || !onlineBoardsEnabled()) {
+    showToast("Snapshot publish failed");
     return;
   }
 
-  const url = createOnlineBoardUrl(board.id);
+  setSnapshotShareUrl(board.id);
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast("Snapshot published and link copied");
+  } catch {
+    window.prompt("Published snapshot link", url);
+  }
+}
+
+async function activeBoardReadyForSnapshot(): Promise<DiagramBoard | null> {
+  const board = appState.activeBoard;
+  if (!board) {
+    return null;
+  }
+
+  const title = elements.boardTitleInput.value;
+  const cleanTitle = title.trim() || "Untitled board";
+  if (cleanTitle !== board.title) {
+    await boardService.renameActiveBoard(title);
+  }
+
+  return boardService.getActiveBoardSnapshot();
+}
+
+async function loadInitialBoardSnapshot() {
+  const id = getInitialSharedBoardId();
+  if (!id || !boardSnapshotRepository) {
+    return;
+  }
+
+  try {
+    const board = await boardSnapshotRepository.get(id);
+    if (!board) {
+      showToast("Published snapshot not found");
+      return;
+    }
+
+    await boardService.loadBoardSnapshot(board);
+    viewportController.fitToContent({ allowZoomIn: false });
+    showToast("Snapshot loaded locally");
+  } catch {
+    showToast("Snapshot load failed");
+  }
+}
+
+function getInitialSharedBoardId(): string | null {
+  if (!isSnapshotSharingEnabled()) {
+    return null;
+  }
+
+  const url = new URL(window.location.href);
+  const id = shareIdToBoardId(url.searchParams.get("board") ?? "");
+  return id || null;
+}
+
+function createSnapshotShareUrl(boardId: string): URL {
+  const url = new URL(window.location.href);
+  url.searchParams.set("board", boardIdToShareId(boardId));
+  return url;
+}
+
+function setSnapshotShareUrl(boardId: string) {
+  const url = createSnapshotShareUrl(boardId);
   if (url.toString() !== window.location.href) {
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
   }
 }
 
-function getInitialOnlineBoardId(): string | null {
-  if (!onlineBoardsEnabled()) {
-    return null;
+function clearSharedBoardUrl() {
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has("board")) {
+    return;
   }
 
-  const url = new URL(window.location.href);
-  const id = url.searchParams.get("board")?.trim();
-  return id || null;
+  url.searchParams.delete("board");
+  window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
-function createOnlineBoardUrl(boardId: string): URL {
-  const url = new URL(window.location.href);
-  url.searchParams.set("board", boardId);
-  return url;
-}
-
-function onlineBoardsEnabled(): boolean {
-  return runtimeConfig.mode === "api" && runtimeConfig.onlineBoards.enabled;
+function isSnapshotSharingEnabled(): boolean {
+  return (
+    runtimeConfig.mode === "api" &&
+    runtimeConfig.boardSnapshots.enabled &&
+    !!boardSnapshotRepository
+  );
 }

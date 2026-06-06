@@ -113,6 +113,11 @@
       <symbol id="icon-copy" viewBox="0 0 24 24">
         <path d="M8 8h11v11H8zM5 16H4V4h12v1" stroke-linejoin="round" />
       </symbol>
+      <symbol id="icon-link" viewBox="0 0 24 24">
+        <path d="M9.5 14.5 14.5 9.5" stroke-linecap="round" />
+        <path d="M11 6.5 12.4 5.1a4 4 0 0 1 5.7 5.7L16.7 12.2" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M13 17.5 11.6 18.9a4 4 0 0 1-5.7-5.7L7.3 11.8" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
       <symbol id="icon-trash" viewBox="0 0 24 24">
         <path d="M5 7h14M10 11v6m4-6v6M9 7V5h6v2m-8 0 1 13h8l1-13" stroke-linecap="round" stroke-linejoin="round" />
       </symbol>
@@ -162,9 +167,12 @@
         <div class="brand-cluster">
           <span class="brand-name">MikroCanvas</span>
           <input id="board-title-input" class="board-title-input" aria-label="Board title" />
-          <span id="persistence-status" class="persistence-status" role="status" aria-live="polite" hidden>Online</span>
         </div>
         <div class="action-cluster">
+          <span id="persistence-status" class="persistence-status" role="status" aria-live="polite" hidden>Local</span>
+          <button id="share-board-btn" class="button icon-button" type="button" title="Publish snapshot link" aria-label="Publish snapshot link" hidden>
+            <svg class="icon" aria-hidden="true"><use href="#icon-link"></use></svg>
+          </button>
           <button id="new-board-btn" class="button icon-button" type="button" title="New board" aria-label="New board">
             <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
           </button>

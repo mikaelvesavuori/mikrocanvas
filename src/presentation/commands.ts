@@ -11,13 +11,13 @@ export type CanvasCommandOptions = {
   canUndo: boolean;
   gridVisible: boolean;
   hasSelection: boolean;
-  onlineBoardId?: string;
-  onlineBoardsEnabled: boolean;
+  activeBoardId?: string;
+  snapshotSharingEnabled: boolean;
   selectionLocked: boolean;
   actions: {
     bringToFront: CommandRunner;
     clearSelection: CommandRunner;
-    copyOnlineBoardLink: CommandRunner;
+    publishBoardSnapshot: CommandRunner;
     copySelection: CommandRunner;
     createBoard: CommandRunner;
     cutSelection: CommandRunner;
@@ -149,8 +149,8 @@ function shapeCommand(shape: ShapeTool, setTool: (tool: DiagramTool) => void): C
 
 function boardCommands({
   actions,
-  onlineBoardId,
-  onlineBoardsEnabled,
+  activeBoardId,
+  snapshotSharingEnabled,
 }: CanvasCommandOptions): CommandAction[] {
   const commands: CommandAction[] = [
     {
@@ -197,13 +197,13 @@ function boardCommands({
     },
   ];
 
-  if (onlineBoardsEnabled && onlineBoardId) {
+  if (snapshotSharingEnabled && activeBoardId) {
     commands.push({
-      detail: "Copy a link that opens this board by ID",
-      id: "copy-online-link",
-      keywords: "share online link url cloud",
-      run: actions.copyOnlineBoardLink,
-      title: "Copy online board link",
+      detail: "Upload the current board snapshot and copy its link",
+      id: "publish-snapshot-link",
+      keywords: "share publish snapshot online link url cloud",
+      run: actions.publishBoardSnapshot,
+      title: "Publish snapshot link",
     });
   }
 

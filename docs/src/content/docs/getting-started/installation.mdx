@@ -4,7 +4,7 @@ description: Run MikroCanvas locally.
 ---
 
 :::tip[Use MikroCanvas Online]
-Open [canvas.mikrosuite.com](https://canvas.mikrosuite.com) to use MikroCanvas online for free. It runs directly in the browser over HTTPS, requires no account, and stores boards privately in browser storage for that site.
+Open [canvas.mikrosuite.com](https://canvas.mikrosuite.com) to use MikroCanvas online for free. It runs over HTTPS, requires no account, and is local-first by default.
 :::
 
 ## Run Your Own Copy
@@ -19,6 +19,8 @@ npx http-server . -a 127.0.0.1 -p 8000 -c-1
 ```
 
 Open `http://127.0.0.1:8000`.
+
+The static app is local-first and stores boards in browser IndexedDB. API-backed snapshot sharing is optional and documented in the deployment and configuration guides.
 
 ## Release Downloads
 

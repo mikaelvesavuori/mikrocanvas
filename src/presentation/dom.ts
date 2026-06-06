@@ -16,6 +16,7 @@ export const elements = {
   inlineEditor: queryElement<HTMLTextAreaElement>("#inline-editor"),
   boardTitleInput: queryElement<HTMLInputElement>("#board-title-input"),
   persistenceStatus: queryElement<HTMLElement>("#persistence-status"),
+  shareBoardButton: queryElement<HTMLButtonElement>("#share-board-btn"),
   newBoardButton: queryElement<HTMLButtonElement>("#new-board-btn"),
   libraryButton: queryElement<HTMLButtonElement>("#library-btn"),
   undoButton: queryElement<HTMLButtonElement>("#undo-btn"),

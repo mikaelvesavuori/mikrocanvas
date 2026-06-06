@@ -3,7 +3,7 @@ title: Configuration
 description: Runtime and browser configuration for MikroCanvas.
 ---
 
-MikroCanvas is local-first by default. It can run as a static app with IndexedDB storage, or with the optional MikroCanvas API for online boards that open when you have the board ID.
+MikroCanvas is local-first by default. It can run as a static app with IndexedDB storage, or with the optional MikroCanvas API for publishing board snapshots that open when you have the board ID.
 
 ## Browser Runtime
 
@@ -15,27 +15,29 @@ The static app reads `config.json` at startup:
 {
   "mode": "local",
   "apiBaseUrl": ".",
-  "onlineBoards": {
+  "boardSnapshots": {
     "enabled": false
   }
 }
 ```
 
-When the API server hosts the app it serves a runtime config with `mode: "api"`, `onlineBoards.enabled: true`, and `apiBaseUrl` pointing to the server.
+When the API server hosts the app it serves a runtime config with `mode: "api"`, `boardSnapshots.enabled: true`, and `apiBaseUrl` pointing to the server.
 
-In API mode, the top bar shows online save status. A failed save also raises a toast so the user knows to retry or export JSON before leaving.
+In API mode, board edits still save locally in IndexedDB. The top bar shows local save status, and a failed local save raises a toast so the user knows to retry or export JSON before leaving.
 
-## Online Boards
+## Published Snapshots
 
-API-backed boards are open if you have the board ID. A URL containing `?board=<board-id>` can load and edit that board from the API, and the command palette can copy the active online board link.
+API-backed snapshots are open if you have the board ID. A URL containing `?board=<id>` loads that published snapshot from the API and stores it locally in the browser.
 
-Deleting is a separate capability. The creating browser keeps a local delete token that is not added to shared links. Operators can configure an optional admin token for recovery deletes.
+Use the link button in the top bar, or Cmd/Ctrl+K and "Publish snapshot link", to upload the current local board snapshot and copy its URL. Later edits remain local until the user publishes again.
 
-There is no MikroAuth requirement for this mode. Treat board IDs and copied links as edit-capable links.
+Operators can configure an optional admin token for recovery deletes of remote snapshots.
+
+There is no MikroAuth requirement for this mode. Treat board IDs and copied links as bearer links to the published snapshot.
 
 ## Deployment Settings
 
-Any static host that serves HTML, CSS, JavaScript, SVG, PNG, ICO, and web manifest files is enough. Configure caching so `index.html` can update quickly while hashed app assets can be cached longer.
+Any static host that serves HTML, CSS, JavaScript, SVG, PNG, ICO, and web manifest files is enough. Configure caching so `index.html`, `config.json`, and unversioned app assets can update quickly.
 
 The API server can be configured with `mikrocanvas.config.json`, environment variables, or CLI flags:
 

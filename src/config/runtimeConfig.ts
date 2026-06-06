@@ -2,19 +2,19 @@ export type RuntimeMode = "api" | "local";
 
 export interface RuntimeConfig {
   apiBaseUrl: string;
-  mode: RuntimeMode;
-  onlineBoards: {
+  boardSnapshots: {
     enabled: boolean;
   };
+  mode: RuntimeMode;
 }
 
 export function createDefaultRuntimeConfig(): RuntimeConfig {
   return {
     apiBaseUrl: ".",
-    mode: "local",
-    onlineBoards: {
+    boardSnapshots: {
       enabled: false,
     },
+    mode: "local",
   };
 }
 
@@ -47,14 +47,14 @@ export function normalizeRuntimeConfig(
     typeof source.apiBaseUrl === "string" && source.apiBaseUrl.trim()
       ? source.apiBaseUrl.trim()
       : defaults.apiBaseUrl;
-  const onlineBoards: Partial<RuntimeConfig["onlineBoards"]> =
-    source.onlineBoards && typeof source.onlineBoards === "object" ? source.onlineBoards : {};
+  const boardSnapshots: Partial<RuntimeConfig["boardSnapshots"]> =
+    source.boardSnapshots && typeof source.boardSnapshots === "object" ? source.boardSnapshots : {};
 
   return {
     apiBaseUrl,
-    mode,
-    onlineBoards: {
-      enabled: mode === "api" && onlineBoards.enabled !== false,
+    boardSnapshots: {
+      enabled: mode === "api" && boardSnapshots.enabled !== false,
     },
+    mode,
   };
 }

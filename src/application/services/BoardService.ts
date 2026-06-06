@@ -17,10 +17,6 @@ type ReplaceOptions = {
   persist?: boolean;
 };
 
-type BootOptions = {
-  initialBoardId?: string | null;
-};
-
 export class BoardService {
   private readonly commandService = new DiagramCommandService();
   private boards: DiagramBoardSummary[] = [];
@@ -33,16 +29,8 @@ export class BoardService {
 
   constructor(private readonly repository: BoardRepository) {}
 
-  async boot(options: BootOptions = {}) {
+  async boot() {
     try {
-      if (options.initialBoardId) {
-        const board = await this.repository.get(options.initialBoardId);
-        if (board) {
-          this.activeBoard = this.commandService.normalizeBoard(board);
-          this.boards = await this.repository.list();
-        }
-      }
-
       this.boards = await this.repository.list();
       if (!this.activeBoard && this.boards.length > 0) {
         const board = await this.repository.get(this.boards[0]?.id ?? "");
@@ -66,7 +54,7 @@ export class BoardService {
       this.storageAvailable = false;
       this.persistence = {
         status: "error",
-        message: "Online save failed. Export JSON before leaving.",
+        message: "Local save failed. Export JSON before leaving.",
         updatedAt: nowIso(),
       };
       this.activeBoard = this.createStarterBoard();
@@ -117,6 +105,13 @@ export class BoardService {
     this.past = [];
     this.future = [];
     this.emit();
+  }
+
+  async loadBoardSnapshot(board: DiagramBoard) {
+    this.activeBoard = this.commandService.normalizeBoard(clone(board));
+    this.past = [];
+    this.future = [];
+    await this.persistActiveBoard();
   }
 
   async renameActiveBoard(title: string) {
@@ -347,7 +342,7 @@ export class BoardService {
     } catch {
       this.persistence = {
         status: "error",
-        message: "Online save failed. Export JSON before leaving.",
+        message: "Local save failed. Export JSON before leaving.",
         updatedAt: nowIso(),
       };
     }
@@ -364,7 +359,7 @@ export class BoardService {
     } catch {
       this.persistence = {
         status: "error",
-        message: "This browser cannot delete that online board.",
+        message: "Board delete failed.",
         updatedAt: nowIso(),
       };
       this.emit();

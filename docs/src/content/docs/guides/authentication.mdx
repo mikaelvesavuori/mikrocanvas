@@ -3,8 +3,8 @@ title: Authentication
 description: Authentication boundary for MikroCanvas.
 ---
 
-MikroCanvas does not include application accounts or sign-in. It is local-first: boards stay in the browser storage area for the current origin.
+MikroCanvas does not include application accounts or sign-in. In local mode, boards stay in the browser storage area for the current origin. In API mode, published snapshots are open by ID and can be loaded by anyone with the board link.
 
 If a deployment needs access control, put MikroCanvas behind the hosting platform's authentication, a private network, or a reverse proxy. The app itself should remain unaware of those credentials.
 
-This keeps the product surface simple and avoids adding account state to local board files.
+This keeps the product surface simple and avoids adding account state to board files. Operators can configure an admin token for recovery deletion of remote snapshots.

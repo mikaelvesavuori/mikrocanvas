@@ -55,6 +55,7 @@ export async function importBoard(
   boardService: BoardService,
   clearSelection: () => void,
   showToast: (message: string) => void,
+  afterImport: () => void = () => undefined,
 ) {
   const file = fileInput.files?.[0];
   fileInput.value = "";
@@ -67,6 +68,7 @@ export async function importBoard(
     const parsed = JSON.parse(text) as ExportedDiagramFile;
     await boardService.importBoardFile(parsed);
     clearSelection();
+    afterImport();
     showToast("Board imported");
   } catch (error) {
     showToast(error instanceof Error ? error.message : "Import failed");

@@ -82,18 +82,17 @@ describe("BoardService", () => {
     );
   });
 
-  it("boots directly into an initial board ID when one is provided", async () => {
+  it("loads published snapshots into local storage", async () => {
     const repository = new MemoryBoardRepository();
-    const first = Board.create("First stored board", "2026-01-01T00:00:00.000Z");
-    const linked = Board.create("Linked online board", "2026-01-01T00:01:00.000Z");
-    await repository.save(first);
-    await repository.save(linked);
+    const snapshot = Board.create("Published snapshot", "2026-01-01T00:01:00.000Z");
 
     const service = new BoardService(repository);
-    await service.boot({ initialBoardId: linked.id });
+    await service.boot();
+    await service.loadBoardSnapshot(snapshot);
 
-    expect(service.getState().activeBoard?.id).toBe(linked.id);
-    expect(service.getState().activeBoard?.title).toBe("Linked online board");
+    expect(service.getState().activeBoard?.id).toBe(snapshot.id);
+    expect(service.getState().activeBoard?.title).toBe("Published snapshot");
+    expect(repository.storedBoard(snapshot.id)?.title).toBe("Published snapshot");
   });
 
   it("tracks undo and redo for committed board edits", async () => {
@@ -190,7 +189,7 @@ describe("BoardService", () => {
     expect(state.activeBoard?.id).toBe(initialId);
     expect(state.persistence).toMatchObject({
       status: "error",
-      message: "This browser cannot delete that online board.",
+      message: "Board delete failed.",
     });
   });
 

@@ -1,1 +1,1 @@
-export * from "./HttpBoardRepository.js";
+export * from "./HttpBoardSnapshotRepository.js";

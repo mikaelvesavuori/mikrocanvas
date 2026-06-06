@@ -210,9 +210,13 @@ h2 {
 }
 
 .persistence-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex: none;
-  min-width: 58px;
-  padding: 4px 8px;
+  min-width: 54px;
+  height: 32px;
+  padding: 0 10px;
   border: 1px solid var(--color-border);
   border-radius: 999px;
   color: var(--color-text-muted);
@@ -1316,6 +1320,7 @@ textarea[hidden],
 .fill-control[hidden],
 .line-style-control[hidden],
 .context-toolbar[hidden],
+.persistence-status[hidden],
 .route-control[hidden],
 .stroke-control[hidden],
 .export-menu[hidden] {

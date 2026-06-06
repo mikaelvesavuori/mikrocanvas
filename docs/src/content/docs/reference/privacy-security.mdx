@@ -3,15 +3,15 @@ title: Privacy and Security
 description: Privacy and security boundaries for MikroCanvas.
 ---
 
-MikroCanvas is local-first by default and stores boards in the browser profile with IndexedDB. Optional online boards use the MikroCanvas API and store board JSON in SQLite.
+MikroCanvas is local-first by default and stores boards in the browser profile with IndexedDB. Optional published snapshots use the MikroCanvas API and store board JSON in SQLite.
 
 ## Data movement
 
 In local mode, board data leaves the browser only when you export files, import files from disk, host the app through infrastructure that observes traffic, or use browser/profile features that sync local data.
 
-In online-board mode, board data is sent to the configured MikroCanvas API. Online boards are open by ID: anyone with a copied board link can open and update that board.
+In snapshot mode, board data is sent to the configured MikroCanvas API only when the user publishes a snapshot. Published snapshots are open by ID: anyone with a copied board link can load that snapshot into their browser.
 
-Deleting uses a separate capability. The creating browser stores a local delete token, and operators can configure an admin token for recovery.
+Operators can configure an admin token for recovery deletion of remote snapshots.
 
 ## File handling
 
@@ -21,4 +21,4 @@ Imported JSON is parsed in the browser and normalized into a new local board. SV
 
 MikroCanvas local mode is a static browser app. Its security posture depends on the browser, the host serving the files, and the care taken with exported board files.
 
-Online-board mode intentionally has no auth gate for opening and editing. Treat board IDs as edit-capable bearer links, use HTTPS in hosted deployments, and place the API behind network controls if links should not be reachable from the public internet.
+Snapshot sharing intentionally has no auth gate for opening published snapshots. Treat board IDs as bearer links, use HTTPS in hosted deployments, and place the API behind network controls if links should not be reachable from the public internet.

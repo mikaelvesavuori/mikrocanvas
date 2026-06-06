@@ -18,12 +18,15 @@ export type AppEventBindingOptions = {
   geometryContext: GeometryContext;
   getActiveBoard: () => DiagramBoard | null;
   clearSelection: () => void;
+  clearSharedBoardUrl: () => void;
   showToast: (message: string) => void;
+  createBoard: () => void;
   duplicateSelection: () => void;
   deleteSelection: () => void;
   reorderSelection: (direction: "front" | "back") => void;
   editSelectedText: () => void;
   toggleGridVisibility: () => void;
+  publishBoardSnapshot: () => void;
   toggleSelectionLock: () => void;
   toggleArrowRoute: () => void;
   applyInspectorText: () => void;
@@ -108,9 +111,18 @@ function isEditableTextTarget(target: EventTarget | null) {
 
 function bindBoardEvents({
   boardService,
+  createBoard,
+  publishBoardSnapshot,
   toggleGridVisibility,
   viewportController,
-}: Pick<AppEventBindingOptions, "boardService" | "toggleGridVisibility" | "viewportController">) {
+}: Pick<
+  AppEventBindingOptions,
+  | "boardService"
+  | "createBoard"
+  | "publishBoardSnapshot"
+  | "toggleGridVisibility"
+  | "viewportController"
+>) {
   elements.boardTitleInput.addEventListener(
     "change",
     () => void boardService.renameActiveBoard(elements.boardTitleInput.value),
@@ -120,12 +132,9 @@ function bindBoardEvents({
       elements.boardTitleInput.blur();
     }
   });
-  elements.newBoardButton.addEventListener("click", () => {
-    void boardService.createBoard("Untitled board").then(() => {
-      viewportController.fitToContent({ allowZoomIn: false });
-    });
-  });
+  elements.newBoardButton.addEventListener("click", createBoard);
   elements.libraryButton.addEventListener("click", () => elements.libraryDialog.showModal());
+  elements.shareBoardButton.addEventListener("click", publishBoardSnapshot);
   elements.undoButton.addEventListener("click", () => void boardService.undo());
   elements.redoButton.addEventListener("click", () => void boardService.redo());
   elements.themeButton.addEventListener("click", toggleTheme);
@@ -137,18 +146,31 @@ function bindBoardEvents({
 
 function bindImportExportEvents({
   boardService,
+  clearSharedBoardUrl,
   clearSelection,
   geometryContext,
   getActiveBoard,
   showToast,
 }: Pick<
   AppEventBindingOptions,
-  "boardService" | "clearSelection" | "geometryContext" | "getActiveBoard" | "showToast"
+  | "boardService"
+  | "clearSharedBoardUrl"
+  | "clearSelection"
+  | "geometryContext"
+  | "getActiveBoard"
+  | "showToast"
 >) {
   elements.importButton.addEventListener("click", () => elements.importFileInput.click());
   elements.importFileInput.addEventListener(
     "change",
-    () => void importBoard(elements.importFileInput, boardService, clearSelection, showToast),
+    () =>
+      void importBoard(
+        elements.importFileInput,
+        boardService,
+        clearSelection,
+        showToast,
+        clearSharedBoardUrl,
+      ),
   );
   elements.exportJsonButton.addEventListener("click", () => exportJson(boardService, showToast));
   elements.exportImageButton.addEventListener("click", toggleExportMenu);

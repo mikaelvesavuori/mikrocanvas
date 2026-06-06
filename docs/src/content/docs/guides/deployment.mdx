@@ -1,6 +1,6 @@
 ---
 title: Deployment
-description: Host MikroCanvas as a static app or with online boards.
+description: Host MikroCanvas as a static app or with published snapshots.
 ---
 
 MikroCanvas ships as static files and can be served from any host that can deliver HTML, CSS, JavaScript, SVG, and web manifest files. This is the default local-first mode.
@@ -20,16 +20,18 @@ Deploy the extracted app files.
 
 No server API is required for the local-first app.
 
-## Online board hosting
+## Snapshot hosting
 
-Run the bundled API server when boards should be saved online and opened by ID:
+Run the bundled API server when users should be able to publish board snapshots and open them by ID:
 
 ```bash
 npm start
 ```
 
-The server stores boards in SQLite and serves `config.json` with API mode enabled. A board URL includes `?board=<board-id>`, and anyone with that ID can open and update the board.
+The server stores published snapshots in SQLite and serves `config.json` with API mode enabled. A board URL includes `?board=<id>`, and anyone with that ID can load the published snapshot locally.
 
-Deleting requires the local delete token held by the creating browser, or an optional configured admin token.
+Publish the active board snapshot from the top-bar link button or from the command palette. Local edits are not uploaded again until the user publishes another snapshot.
+
+Configure an optional admin token if operators need recovery deletion for remote snapshots.
 
 Use `mikrocanvas.config.json`, environment variables, or CLI flags to set the host, port, app URL, database path, and optional admin token. See `mikrocanvas.config.json.example` for the file shape.

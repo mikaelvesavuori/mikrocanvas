@@ -3,6 +3,7 @@ node_modules/
 dist/
 coverage/
 artifacts/
+data/
 
 docs/.astro/
 docs/dist/

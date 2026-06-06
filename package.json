@@ -1,6 +1,6 @@
 {
   "name": "mikrocanvas",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Local-first visual canvas for fast ad hoc thinking.",
   "type": "module",
   "license": "MIT",

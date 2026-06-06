@@ -35,3 +35,9 @@ Publish the active board snapshot from the top-bar link button or from the comma
 Configure an optional admin token if operators need recovery deletion for remote snapshots.
 
 Use `mikrocanvas.config.json`, environment variables, or CLI flags to set the host, port, app URL, database path, and optional admin token. See `mikrocanvas.config.json.example` for the file shape.
+
+## Cloudflare Pages
+
+Cloudflare Pages builds set `CF_PAGES=1`, so MikroCanvas emits `dist/config.json` with API-backed snapshots enabled and `apiBaseUrl` set to `https://canvas-api.mikrosuite.com`.
+
+Set `MIKROCANVAS_PUBLIC_API_BASE_URL` in the Pages build environment to override that API origin.

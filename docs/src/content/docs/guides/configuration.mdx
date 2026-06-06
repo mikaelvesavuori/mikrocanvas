@@ -23,6 +23,8 @@ The static app reads `config.json` at startup:
 
 When the API server hosts the app it serves a runtime config with `mode: "api"`, `boardSnapshots.enabled: true`, and `apiBaseUrl` pointing to the server.
 
+When Cloudflare Pages builds the static app, the build writes an API-mode `dist/config.json` automatically. By default it points at `https://canvas-api.mikrosuite.com`; set `MIKROCANVAS_PUBLIC_API_BASE_URL` in the Pages build environment to use another API origin.
+
 In API mode, board edits still save locally in IndexedDB. The top bar shows local save status, and a failed local save raises a toast so the user knows to retry or export JSON before leaving.
 
 ## Published Snapshots

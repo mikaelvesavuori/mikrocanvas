@@ -1,4 +1,12 @@
-import { cpSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
+import {
+  cpSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { extname, join, relative } from "node:path";
 import { build } from "esbuild";
 
@@ -8,6 +16,7 @@ const publicDir = join(srcDir, "public");
 const distDir = "dist";
 const assetsDir = join(distDir, "assets");
 const packageVersion = JSON.parse(readFileSync("./package.json", "utf8")).version as string;
+const cloudflarePagesApiBaseUrl = "https://canvas-api.mikrosuite.com";
 const skippedExtensions = new Set([".css", ".html", ".js", ".mjs", ".ts", ".mts"]);
 const skippedNames = new Set([".DS_Store", "Thumbs.db"]);
 const target = getTarget();
@@ -113,11 +122,49 @@ async function buildStaticApp() {
   copyFile(join(uiDir, "index.html"), join(distDir, "index.html"));
   copyStatic(uiDir, distDir);
   copyStatic(publicDir, distDir);
+  writeHostedRuntimeConfig();
 }
 
 function getTarget() {
   const targetIndex = process.argv.indexOf("--target");
   return targetIndex >= 0 ? (process.argv[targetIndex + 1] ?? "all") : "all";
+}
+
+function writeHostedRuntimeConfig() {
+  const apiBaseUrl = getHostedApiBaseUrl();
+  if (!apiBaseUrl) {
+    return;
+  }
+
+  try {
+    new URL(apiBaseUrl);
+  } catch {
+    throw new Error(`Invalid MikroCanvas public API base URL: ${apiBaseUrl}`);
+  }
+
+  writeFileSync(
+    join(distDir, "config.json"),
+    `${JSON.stringify(
+      {
+        apiBaseUrl,
+        boardSnapshots: {
+          enabled: true,
+        },
+        mode: "api",
+      },
+      null,
+      2,
+    )}\n`,
+  );
+}
+
+function getHostedApiBaseUrl() {
+  const configuredApiBaseUrl = process.env.MIKROCANVAS_PUBLIC_API_BASE_URL?.trim();
+  if (configuredApiBaseUrl) {
+    return configuredApiBaseUrl;
+  }
+
+  return process.env.CF_PAGES === "1" ? cloudflarePagesApiBaseUrl : "";
 }
 
 main().catch((error) => {
